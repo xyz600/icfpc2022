@@ -1,3 +1,6 @@
+use png::{ColorType, Decoder};
+use std::fs::File;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Color {
     pub r: u8,
@@ -27,6 +30,37 @@ pub struct Image {
     pub height: usize,
     pub width: usize,
     pub buffer: Vec<Color>,
+}
+
+impl Image {
+    pub fn new(filepath: String) -> Image {
+        let decoder = png::Decoder::new(File::open(filepath.as_str()).unwrap());
+        let mut reader = decoder.read_info().unwrap();
+        let mut raw_buffer = vec![0; reader.output_buffer_size()];
+        let info = reader.next_frame(&mut raw_buffer).unwrap();
+        assert!(info.color_type == ColorType::Rgba);
+
+        //
+        let height = info.height as usize;
+        let width = info.width as usize;
+        let mut buffer = vec![];
+        for i in 0..height * width {
+            let r = raw_buffer[4 * i];
+            let g = raw_buffer[4 * i + 1];
+            let b = raw_buffer[4 * i + 2];
+            let a = raw_buffer[4 * i + 3];
+            buffer.push(Color::new(r, g, b, a));
+        }
+        Image {
+            height,
+            width,
+            buffer,
+        }
+    }
+
+    pub fn color(&self, pos: &Pos) -> Color {
+        self.buffer[pos.y * self.width + pos.x]
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
