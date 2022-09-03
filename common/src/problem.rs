@@ -315,8 +315,8 @@ impl Image {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Pos {
-    y: usize,
-    x: usize,
+    pub y: usize,
+    pub x: usize,
 }
 
 impl Pos {
@@ -494,7 +494,7 @@ impl Block {
 }
 
 /// 最終的に出力する内容に関わるもの
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Command {
     // block_idx, y
     HorizontalSplit(usize, usize),
@@ -815,7 +815,7 @@ mod tests {
     }
 }
 
-pub fn evaluate(state: &State, image: &Image) -> f64 {
+pub fn evaluate(image: &Image, state: &State) -> f64 {
     let mut pixel_cost = 0f64;
     let state_image = state.to_color_buffer();
     for y in 0..image.height {
@@ -832,5 +832,5 @@ pub fn evaluate(state: &State, image: &Image) -> f64 {
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
 
-    pixel_cost.sqrt() + command_cost as f64
+    pixel_cost + command_cost as f64
 }

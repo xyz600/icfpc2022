@@ -34,26 +34,130 @@ fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
 fn solve(image: &Image) -> State {
     let mut state = State::new(image.height, image.width);
 
-    // 雑に間引いて、これまで切った部分は
-    let (row_edge_list, col_edge_list) = detect_edge(image, 30.0);
+    let cum = CumulativeRMSESum::new(image);
 
-    eprintln!("{:?}", row_edge_list);
-    eprintln!("{:?}", col_edge_list);
+    let mut exact_eval = evaluate(image, &state);
 
     loop {
-        let rmse_cumulator = CumulativeRMSESum::new(image, &state);
+        let mut best_command = None;
+        let mut best_eval = 0f64;
 
-        // 貪欲法
-        // 以下の選択肢で一番良さそうなものを選択
-        // 1. 横線1本 + 2色
-        // 2. 縦線1本 + 2色
-        // 3. 点1つ + 4色
-        // 4. 横線2本 + 3色
-        // 5. 縦線2本 + 3色
+        for block_index in 0..state.block_list.len() {
+            if !state.block_list[block_index].is_child {
+                continue;
+            }
+            let rect = state.block_list[block_index].rect;
+            let before_rmse = cum
+                .range_rmse(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1)
+                .horizontal_add();
+            // 貪欲法
+            // 以下の選択肢で一番良さそうなものを選択
+            // 1. 横線1本 + 2色
+            for y in rect.bottom() + 1..rect.top() {
+                let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1)
+                    + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
+                let eval = before_rmse - after_rmse.horizontal_add();
+                if best_eval < eval {
+                    best_eval = eval;
+                    best_command = Some(Command::HorizontalSplit(block_index, y));
+                }
+            }
 
-        break;
+            // 2. 縦線1本 + 2色
+            for x in rect.left() + 1..rect.right() {
+                let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x)
+                    + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
+                let eval = before_rmse - after_rmse.horizontal_add();
+                if best_eval < eval {
+                    best_eval = eval;
+                    best_command = Some(Command::VerticalSplit(block_index, x));
+                }
+            }
+
+            // 3. 点1つ + 4色
+            for y in rect.bottom() + 1..rect.top() {
+                for x in rect.left() + 1..rect.right() {
+                    let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x)
+                        + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1)
+                        + cum.range_rmse(y, x, rect.top() + 1, rect.right() + 1)
+                        + cum.range_rmse(y, rect.left(), rect.top(), x);
+                    let eval = before_rmse - after_rmse.horizontal_add();
+                    if best_eval < eval {
+                        best_eval = eval;
+                        best_command = Some(Command::PointSplit(block_index, Pos::new(y, x)));
+                    }
+                }
+            }
+            // FIXME:
+            // 4. 横線2本 + 3色
+            // 5. 縦線2本 + 3色
+        }
+
+        if let Some(command) = best_command {
+            state.apply(command);
+            let rect = state.block_list[command.block_index()].rect;
+            let undo_count = match command {
+                Command::HorizontalSplit(_, y) => {
+                    let new_block_index = state.block_list.len() - 2;
+                    let bottom_color =
+                        cum.mean_color(rect.bottom(), rect.left(), y, rect.right() + 1);
+                    let top_color =
+                        cum.mean_color(y, rect.left(), rect.top() + 1, rect.right() + 1);
+                    state.apply(Command::Color(new_block_index, bottom_color));
+                    state.apply(Command::Color(new_block_index + 1, top_color));
+                    2
+                }
+                Command::VerticalSplit(_, x) => {
+                    let new_block_index = state.block_list.len() - 2;
+                    let left_color = cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, x);
+                    let right_color =
+                        cum.mean_color(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
+                    state.apply(Command::Color(new_block_index, left_color));
+                    state.apply(Command::Color(new_block_index + 1, right_color));
+                    2
+                }
+                Command::PointSplit(_, pos) => {
+                    let new_block_index = state.block_list.len() - 4;
+                    let bl_color = cum.mean_color(rect.bottom(), rect.left(), pos.y, pos.x);
+                    let br_color = cum.mean_color(rect.bottom(), pos.x, pos.y, rect.right() + 1);
+                    let tr_color = cum.mean_color(pos.y, pos.x, rect.top() + 1, rect.right() + 1);
+                    let tl_color = cum.mean_color(pos.y, rect.left(), rect.top() + 1, pos.x);
+                    for (index, color) in
+                        [bl_color, br_color, tr_color, tl_color].iter().enumerate()
+                    {
+                        state.apply(Command::Color(new_block_index + index, *color));
+                    }
+                    4
+                }
+                _ => {
+                    panic!("maybe bugs");
+                }
+            };
+            let next_exact_eval = evaluate(image, &state);
+            // 厳密コスト計算だけして、色塗りは一番最後に全部やる
+            for _iter in 0..undo_count {
+                state.undo();
+            }
+            if next_exact_eval > exact_eval {
+                // 厳密コストが改善しないので、最後に行ったコマンドも undo して停止
+                state.undo();
+                break;
+            }
+        } else {
+            // そもそも色の誤差が減らないなら継続の意味がない
+            break;
+        }
     }
 
+    // 最後の色塗り
+    for index in 0..state.block_list.len() {
+        if state.block_list[index].is_child {
+            let rect = state.block_list[index].rect;
+            let best_color =
+                cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1);
+            state.apply(Command::Color(index, best_color));
+        }
+    }
     state
 }
 

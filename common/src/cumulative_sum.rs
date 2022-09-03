@@ -8,11 +8,9 @@ pub struct CumulativeRMSESum {
 }
 
 impl CumulativeRMSESum {
-    pub fn new(image: &Image, state: &State) -> CumulativeRMSESum {
+    pub fn new(image: &Image) -> CumulativeRMSESum {
         let height = image.height;
         let width = image.width;
-
-        let state_data = state.to_color_buffer();
 
         let mut data = vec![vec![Color64::default(); width]; height];
         let mut squared_data = vec![vec![Color64::default(); width]; height];
@@ -20,10 +18,9 @@ impl CumulativeRMSESum {
         for y in 0..height {
             for x in 0..width {
                 let target_color = image.color_of(y, x).to64();
-                let state_color = state_data[y][x].to64();
-                let diff = target_color - state_color;
-                data[y][x] = diff;
-                squared_data[y][x] = diff.square();
+
+                data[y][x] = target_color;
+                squared_data[y][x] = target_color.square();
             }
         }
 
@@ -39,7 +36,15 @@ impl CumulativeRMSESum {
         let size = (ey - sy) * (ex - sx);
         let t1 = self.squared_mean_sum.range_sum(sy, sx, ey, ex);
         let t2 = self.mean_sum.range_sum(sy, sx, ey, ex).square() / (size as f64);
-        (t1 - t2).sqrt()
+        t1 - t2
+    }
+
+    // FIXME:
+    pub fn mean_color(&self, sy: usize, sx: usize, ey: usize, ex: usize) -> Color8 {
+        let size = (ey - sy) * (ex - sx);
+        (self.mean_sum.range_sum(sy, sx, ey, ex) / (size as f64))
+            .round()
+            .to8()
     }
 }
 
@@ -94,7 +99,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::problem::Command;
 
     use super::*;
 
@@ -130,14 +134,12 @@ mod tests {
             ],
         };
 
-        let mut state = State::new(3, 3);
-        state.apply(Command::Color(0, Color8::new(0, 0, 0, 0)));
-        let rmse_calculator = CumulativeRMSESum::new(&image, &state);
+        let rmse_calculator = CumulativeRMSESum::new(&image);
         let ret = rmse_calculator.range_rmse(1, 1, 3, 3);
 
         let mean = (2.0 + 3.0 + 3.0 + 4.0) / 4.0f64;
         let val = (2.0 - mean).powi(2) + (3.0 - mean).powi(2) * 2.0 + (4.0 - mean).powi(2);
-        let expected = Color64::new(val, val, val, val).sqrt();
+        let expected = Color64::new(val, val, val, val);
         assert!((ret - expected).horizontal_add() < 1e-7);
     }
 }
