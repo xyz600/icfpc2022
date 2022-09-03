@@ -1,6 +1,92 @@
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
-use crate::problem::{Color64, Color8, Image, State};
+use crate::problem::{Color64, Color8, Image};
+
+/// u8 の 2次元バッファに対して median を高速に求める
+pub struct RangeMedianCalculator {
+    buffer: Vec<CumulativeSum<usize>>,
+}
+
+impl RangeMedianCalculator {
+    pub fn new(buffer: &Vec<Vec<u8>>) -> RangeMedianCalculator {
+        let height = buffer.len();
+        let width = buffer[0].len();
+
+        let mut count_table = vec![vec![vec![0; width]; height]; 256];
+
+        for y in 0..height {
+            for x in 0..width {
+                let val = buffer[y][x] as usize;
+                count_table[val][y][x] = 1;
+            }
+        }
+
+        let mut buffer = vec![];
+        for val in 0..256 {
+            buffer.push(CumulativeSum::<usize>::new(&count_table[val]));
+        }
+
+        RangeMedianCalculator { buffer }
+    }
+
+    pub fn median(&self, sy: usize, sx: usize, ey: usize, ex: usize) -> u8 {
+        let threashold = (1 + (ey - sy) * (ex - sx)) / 2;
+        let mut sum = 0;
+        for val in 0..256 {
+            let freq = self.buffer[val].range_sum(sy, sx, ey, ex);
+            if sum < threashold && threashold <= sum + freq {
+                return val as u8;
+            }
+            sum += freq;
+        }
+        255
+    }
+}
+
+pub struct RangeColorMedianCalculator {
+    range_median_calculator: [RangeMedianCalculator; 4],
+}
+
+impl RangeColorMedianCalculator {
+    pub fn new(image: &Image) -> RangeColorMedianCalculator {
+        let height = image.height;
+        let width = image.width;
+
+        let mut buffer = [
+            vec![vec![0; width]; height],
+            vec![vec![0; width]; height],
+            vec![vec![0; width]; height],
+            vec![vec![0; width]; height],
+        ];
+        for y in 0..height {
+            for x in 0..width {
+                let color = image.color_of(y, x);
+                buffer[0][y][x] = color.r;
+                buffer[1][y][x] = color.g;
+                buffer[2][y][x] = color.b;
+                buffer[3][y][x] = color.a;
+            }
+        }
+
+        let r_median = RangeMedianCalculator::new(&buffer[0]);
+        let g_median = RangeMedianCalculator::new(&buffer[1]);
+        let b_median = RangeMedianCalculator::new(&buffer[2]);
+        let a_median = RangeMedianCalculator::new(&buffer[3]);
+
+        RangeColorMedianCalculator {
+            range_median_calculator: [r_median, g_median, b_median, a_median],
+        }
+    }
+
+    pub fn median(&self, sy: usize, sx: usize, ey: usize, ex: usize) -> Color8 {
+        let median_r = self.range_median_calculator[0].median(sy, sx, ey, ex);
+        let median_g = self.range_median_calculator[1].median(sy, sx, ey, ex);
+        let median_b = self.range_median_calculator[2].median(sy, sx, ey, ex);
+        let median_a = self.range_median_calculator[3].median(sy, sx, ey, ex);
+
+        Color8::new(median_r, median_g, median_b, median_a)
+    }
+}
 
 pub struct CumulativeRMSESum {
     mean_sum: CumulativeSum<Color64>,
@@ -141,5 +227,22 @@ mod tests {
         let val = (2.0 - mean).powi(2) + (3.0 - mean).powi(2) * 2.0 + (4.0 - mean).powi(2);
         let expected = Color64::new(val, val, val, val);
         assert!((ret - expected).horizontal_add() < 1e-7);
+    }
+
+    #[test]
+    fn test_median() {
+        let data = vec![
+            vec![0, 1, 1, 2, 2, 3, 3],
+            vec![1, 2, 2, 3, 3, 4, 4],
+            vec![0, 1, 1, 2, 2, 3, 3],
+            vec![0, 1, 1, 2, 2, 3, 3],
+            vec![0, 2, 2, 2, 2, 3, 3],
+            vec![0, 1, 1, 2, 2, 3, 3],
+            vec![0, 1, 1, 2, 2, 3, 3],
+        ];
+
+        let median_calculator = RangeMedianCalculator::new(&data);
+        let med = median_calculator.median(1, 1, 4, 4);
+        assert_eq!(med, 2);
     }
 }

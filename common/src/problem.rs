@@ -113,6 +113,19 @@ impl SubAssign<Color64> for Color64 {
     }
 }
 
+impl Mul<Color64> for Color64 {
+    type Output = Color64;
+
+    fn mul(self, rhs: Color64) -> Self::Output {
+        Color64 {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+            a: self.a * rhs.a,
+        }
+    }
+}
+
 impl Mul<f64> for Color64 {
     type Output = Color64;
 

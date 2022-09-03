@@ -162,19 +162,21 @@ fn main() {
         .author("xyz600")
         .about("problem solver for icfpc 2022")
         .arg(
-            Arg::with_name("input-filepath")
-                .help("input png filepath")
+            Arg::with_name("problem-id")
+                .help("input problem id")
                 .short('i')
-                .long("input-filepath")
+                .long("problem-id")
                 .required(true)
                 .takes_value(true),
         );
 
     let matches = app.get_matches();
 
-    let input_filepath = matches.value_of("input-filepath").unwrap();
-    let image = Image::new(input_filepath);
+    let problem_id = matches.value_of("problem-id").unwrap();
+    let input_filepath = format!("dataset/{}.png", problem_id);
+    let image = Image::new(input_filepath.as_str());
 
     let final_state = solve(&image);
+    final_state.save_image(&format!("solution/{problem_id}.png"));
     final_state.print_output();
 }
