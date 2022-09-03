@@ -494,9 +494,40 @@ impl Block {
 }
 
 /// 最終的に出力する内容に関わるもの
-/// FIXME: color の prev_color を消す
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Command {
+    // block_idx, y
+    HorizontalSplit(usize, usize),
+    // block_idx, x
+    VerticalSplit(usize, usize),
+    // block_idx, (x, y)
+    PointSplit(usize, Pos),
+    // block_idx, prev_color, color
+    Color(usize, Color8),
+}
+
+impl Command {
+    pub fn base_cost(&self) -> usize {
+        match *self {
+            Command::HorizontalSplit(_, _) => 7,
+            Command::VerticalSplit(_, _) => 7,
+            Command::PointSplit(_, _) => 10,
+            Command::Color(_, _) => 5,
+        }
+    }
+
+    pub fn block_index(&self) -> usize {
+        match *self {
+            Command::HorizontalSplit(block_index, _) => block_index,
+            Command::VerticalSplit(block_index, _) => block_index,
+            Command::PointSplit(block_index, _) => block_index,
+            Command::Color(block_index, _) => block_index,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+enum CommandWithLog {
     // block_idx, y
     HorizontalSplit(usize, usize),
     // block_idx, x
@@ -507,22 +538,22 @@ pub enum Command {
     Color(usize, Color8, Color8),
 }
 
-impl Command {
+impl CommandWithLog {
     pub fn base_cost(&self) -> usize {
         match *self {
-            Command::HorizontalSplit(_, _) => 7,
-            Command::VerticalSplit(_, _) => 7,
-            Command::PointSplit(_, _) => 10,
-            Command::Color(_, _, _) => 5,
+            CommandWithLog::HorizontalSplit(_, _) => 7,
+            CommandWithLog::VerticalSplit(_, _) => 7,
+            CommandWithLog::PointSplit(_, _) => 10,
+            CommandWithLog::Color(_, _, _) => 5,
         }
     }
 
     pub fn block_index(&self) -> usize {
         match *self {
-            Command::HorizontalSplit(block_index, _) => block_index,
-            Command::VerticalSplit(block_index, _) => block_index,
-            Command::PointSplit(block_index, _) => block_index,
-            Command::Color(block_index, _, _) => block_index,
+            CommandWithLog::HorizontalSplit(block_index, _) => block_index,
+            CommandWithLog::VerticalSplit(block_index, _) => block_index,
+            CommandWithLog::PointSplit(block_index, _) => block_index,
+            CommandWithLog::Color(block_index, _, _) => block_index,
         }
     }
 }
@@ -530,8 +561,8 @@ impl Command {
 #[derive(Clone, PartialEq, Debug)]
 pub struct State {
     pub block_list: Vec<Block>,
-    pub command_list: Vec<Command>,
-    pub max_block_id: usize,
+    max_block_id: usize,
+    command_list: Vec<CommandWithLog>,
 }
 
 impl State {
@@ -557,20 +588,35 @@ impl State {
 
     pub fn apply(&mut self, cmd: Command) {
         match cmd {
-            Command::HorizontalSplit(block_index, y) => self.horizontal_split(block_index, y),
-            Command::VerticalSplit(block_index, x) => self.vertical_split(block_index, x),
-            Command::PointSplit(block_index, pos) => self.point_cut(block_index, &pos),
-            Command::Color(block_index, prev_color, color) => {
-                self.color(block_index, &prev_color, &color)
+            Command::HorizontalSplit(block_index, y) => {
+                self.horizontal_split(block_index, y);
+                self.command_list
+                    .push(CommandWithLog::HorizontalSplit(block_index, y));
+            }
+            Command::VerticalSplit(block_index, x) => {
+                self.vertical_split(block_index, x);
+                self.command_list
+                    .push(CommandWithLog::VerticalSplit(block_index, x));
+            }
+            Command::PointSplit(block_index, pos) => {
+                self.point_cut(block_index, &pos);
+                self.command_list
+                    .push(CommandWithLog::PointSplit(block_index, pos))
+            }
+            Command::Color(block_index, color) => {
+                let prev_color = self.block_list[block_index].color;
+                self.color(block_index, &prev_color, &color);
+                self.command_list
+                    .push(CommandWithLog::Color(block_index, prev_color, color));
             }
         }
-        self.command_list.push(cmd);
     }
 
     pub fn undo(&mut self) {
         assert!(!self.command_list.is_empty());
         match *self.command_list.last().unwrap() {
-            Command::HorizontalSplit(block_index, _) | Command::VerticalSplit(block_index, _) => {
+            CommandWithLog::HorizontalSplit(block_index, _)
+            | CommandWithLog::VerticalSplit(block_index, _) => {
                 for _ in 0..2 {
                     assert!(self.block_list.last().unwrap().parent.unwrap() == block_index);
                     self.block_list.pop();
@@ -578,7 +624,7 @@ impl State {
                 assert!(!self.block_list[block_index].is_child);
                 self.block_list[block_index].is_child = true;
             }
-            Command::PointSplit(block_index, _) => {
+            CommandWithLog::PointSplit(block_index, _) => {
                 for _ in 0..4 {
                     assert!(self.block_list.last().unwrap().parent.unwrap() == block_index);
                     self.block_list.pop();
@@ -586,7 +632,7 @@ impl State {
                 assert!(!self.block_list[block_index].is_child);
                 self.block_list[block_index].is_child = true;
             }
-            Command::Color(block_index, prev_color, _) => {
+            CommandWithLog::Color(block_index, prev_color, _) => {
                 assert!(self.block_list[block_index].is_child);
                 self.block_list[block_index].color = prev_color;
             }
@@ -663,19 +709,19 @@ impl State {
 
         for cmd in self.command_list.iter() {
             match *cmd {
-                Command::HorizontalSplit(block_index, y) => {
+                CommandWithLog::HorizontalSplit(block_index, y) => {
                     let block_id = restore_id_sequence(block_index);
                     println!("cut [{}] [y] [{}]", block_id, y);
                 }
-                Command::VerticalSplit(block_index, x) => {
+                CommandWithLog::VerticalSplit(block_index, x) => {
                     let block_id = restore_id_sequence(block_index);
                     println!("cut [{}] [x] [{}]", block_id, x);
                 }
-                Command::PointSplit(block_index, pos) => {
+                CommandWithLog::PointSplit(block_index, pos) => {
                     let block_id = restore_id_sequence(block_index);
                     println!("cut [{}] [{}, {}]", block_id, pos.x, pos.y);
                 }
-                Command::Color(block_index, _, color) => {
+                CommandWithLog::Color(block_index, _, color) => {
                     let block_id = restore_id_sequence(block_index);
                     println!(
                         "color [{}] [{}, {}, {}, {}] ",
@@ -762,11 +808,7 @@ mod tests {
         clone.undo();
         assert_eq!(state, clone);
 
-        clone.apply(Command::Color(
-            1,
-            clone.block_list[1].color,
-            Color::new(128, 128, 128, 128),
-        ));
+        clone.apply(Command::Color(1, Color::new(128, 128, 128, 128)));
         assert_eq!(clone.block_list.len(), 5);
         clone.undo();
         assert_eq!(state, clone);

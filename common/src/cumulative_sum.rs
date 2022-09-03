@@ -131,11 +131,7 @@ mod tests {
         };
 
         let mut state = State::new(3, 3);
-        state.apply(Command::Color(
-            0,
-            Color8::new(255, 255, 255, 255),
-            Color8::new(0, 0, 0, 0),
-        ));
+        state.apply(Command::Color(0, Color8::new(0, 0, 0, 0)));
         let rmse_calculator = CumulativeRMSESum::new(&image, &state);
         let ret = rmse_calculator.range_rmse(1, 1, 3, 3);
 

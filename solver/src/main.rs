@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use common::cumulative_sum::*;
 use common::problem::*;
 
 fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
@@ -39,14 +40,19 @@ fn solve(image: &Image) -> State {
     eprintln!("{:?}", row_edge_list);
     eprintln!("{:?}", col_edge_list);
 
-    // 貪欲法
-    // 以下の選択肢で一番良さそうなものを選択
-    // 1. 横線1本 + 2色
-    // 2. 縦線1本 + 2色
-    // 3. 点1つ + 4色
-    // 4. 横線2本 + 3色
-    // 5. 縦線2本 + 3色
-    // エッジ候補が多すぎる場合、間引く
+    loop {
+        let rmse_cumulator = CumulativeRMSESum::new(image, &state);
+
+        // 貪欲法
+        // 以下の選択肢で一番良さそうなものを選択
+        // 1. 横線1本 + 2色
+        // 2. 縦線1本 + 2色
+        // 3. 点1つ + 4色
+        // 4. 横線2本 + 3色
+        // 5. 縦線2本 + 3色
+
+        break;
+    }
 
     state
 }
