@@ -39,6 +39,7 @@ fn solve(image: &Image) -> State {
     let mut exact_eval = evaluate(image, &state);
 
     for turn in 0.. {
+        eprintln!("---");
         let mut best_command = None;
         let mut best_gain = 0f64;
 
