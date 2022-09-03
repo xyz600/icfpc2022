@@ -2,6 +2,7 @@
 
 import requests
 import json 
+from io import StringIO
 
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inh5ejYwMDYwMEBnbWFpbC5jb20iLCJleHAiOjE2NjIyMDY0MTYsIm9yaWdfaWF0IjoxNjYyMTIwMDE2fQ.qnTW6qeneQTkuHE2x1E5c0vbcJ_5TWACrcIvklBYE6Y"
 
@@ -26,12 +27,20 @@ class ICFPCClient:
 
         return json.loads(response.content.decode("utf-8"))
 
-    def submit(self):
-        pass
+    def submit(self, problem_id: int):
+
+        with open(f"../solution/{problem_id}.txt", 'r') as fin:
+            content = fin.read()
+            response = requests.post(f"https://robovinci.xyz/api/submissions/{problem_id}/create",
+                                    headers={"Authorization": f"Bearer {self.api_key}"},
+                                    files={"file": ("submission.isl", StringIO(content))})
+
+        response.raise_for_status()
+
 
 if __name__ == "__main__":
 
     client = ICFPCClient(API_KEY)
-
-    msg = client.users()
-    print(msg)
+    for id in range(1, 25):
+        client.submit(id)
+        print(f"submit {id}")
