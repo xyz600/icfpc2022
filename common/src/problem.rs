@@ -207,6 +207,15 @@ impl Color64 {
         }
     }
 
+    pub fn abs(&self) -> Color64 {
+        Color {
+            r: self.r.abs(),
+            g: self.g.abs(),
+            b: self.b.abs(),
+            a: self.a.abs(),
+        }
+    }
+
     pub fn horizontal_add(&self) -> f64 {
         self.r + self.g + self.b + self.a
     }
@@ -881,7 +890,6 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
     pixel_cost = (pixel_cost * ALPHA).round();
-    eprintln!("(pixel, commaned) = ({}, {})", pixel_cost, command_cost);
     const ALPHA: f64 = 0.005;
 
     pixel_cost + command_cost as f64
