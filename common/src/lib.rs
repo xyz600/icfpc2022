@@ -1,5 +1,5 @@
 use png::{ColorType, Decoder};
-use std::fs::File;
+use std::{fs::File, str::FromStr};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Color {
@@ -33,8 +33,8 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(filepath: String) -> Image {
-        let decoder = png::Decoder::new(File::open(filepath.as_str()).unwrap());
+    pub fn new(filepath: &str) -> Image {
+        let decoder = png::Decoder::new(File::open(filepath).unwrap());
         let mut reader = decoder.read_info().unwrap();
         let mut raw_buffer = vec![0; reader.output_buffer_size()];
         let info = reader.next_frame(&mut raw_buffer).unwrap();
@@ -253,6 +253,17 @@ pub enum Command {
     Color(usize, Color, Color),
 }
 
+impl Command {
+    pub fn base_cost(&self) -> usize {
+        match *self {
+            Command::HorizontalSplit(_, _) => 7,
+            Command::VerticalSplit(_, _) => 7,
+            Command::PointSplit(_, _) => 10,
+            Command::Color(_, _, _) => 5,
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct State {
     pub block_list: Vec<Block>,
@@ -320,13 +331,13 @@ impl State {
         self.command_list.pop();
     }
 
-    pub fn color(&mut self, block_index: usize, prev_color: &Color, color: &Color) {
+    fn color(&mut self, block_index: usize, prev_color: &Color, color: &Color) {
         assert!(block_index < self.block_list.len());
         assert!(self.block_list[block_index].color == *prev_color);
         self.block_list[block_index].color = *color;
     }
 
-    pub fn horizontal_split(&mut self, block_index: usize, y: usize) {
+    fn horizontal_split(&mut self, block_index: usize, y: usize) {
         assert!(block_index < self.block_list.len());
         let len = self.block_list.len();
         let mut parent_block = &mut self.block_list[block_index];
@@ -339,7 +350,7 @@ impl State {
         self.block_list.push(top_block);
     }
 
-    pub fn vertical_split(&mut self, block_index: usize, x: usize) {
+    fn vertical_split(&mut self, block_index: usize, x: usize) {
         assert!(block_index < self.block_list.len());
         let len = self.block_list.len();
         let mut parent_block = &mut self.block_list[block_index];
@@ -352,7 +363,7 @@ impl State {
         self.block_list.push(right_block);
     }
 
-    pub fn point_cut(&mut self, block_index: usize, pos: &Pos) {
+    fn point_cut(&mut self, block_index: usize, pos: &Pos) {
         assert!(block_index < self.block_list.len());
         let len = self.block_list.len();
         let mut parent_block = &mut self.block_list[block_index];
@@ -364,6 +375,51 @@ impl State {
         let (bl, br, ur, ul) = parent_block.point_split(pos, len);
         for block in [bl, br, ur, ul] {
             self.block_list.push(block);
+        }
+    }
+
+    pub fn print_output(&self) {
+        let restore_id_sequence = |block_index: usize| -> String {
+            let mut id_list = vec![];
+            let mut index = block_index;
+            loop {
+                id_list.push(self.block_list[index].id);
+                if let Some(parent_block_index) = self.block_list[index].parent {
+                    index = parent_block_index;
+                } else {
+                    break;
+                }
+            }
+            id_list.reverse();
+            id_list
+                .into_iter()
+                .map(|v: usize| v.to_string())
+                .collect::<Vec<_>>()
+                .join(".")
+        };
+
+        for cmd in self.command_list.iter() {
+            match *cmd {
+                Command::HorizontalSplit(block_index, y) => {
+                    let block_id = restore_id_sequence(block_index);
+                    println!("cut [{}] [y] [{}]", block_id, y);
+                }
+                Command::VerticalSplit(block_index, x) => {
+                    let block_id = restore_id_sequence(block_index);
+                    println!("cut [{}] [x] [{}]", block_id, x);
+                }
+                Command::PointSplit(block_index, pos) => {
+                    let block_id = restore_id_sequence(block_index);
+                    println!("cut [{}] [{}, {}]", block_id, pos.x, pos.y);
+                }
+                Command::Color(block_index, _, color) => {
+                    let block_id = restore_id_sequence(block_index);
+                    println!(
+                        "color [{}] [{}, {}, {}, {}] ",
+                        block_id, color.r, color.g, color.b, color.a
+                    );
+                }
+            }
         }
     }
 }
