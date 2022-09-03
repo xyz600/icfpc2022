@@ -1,21 +1,161 @@
-use png::{ColorType, Decoder};
-use std::{fs::File, str::FromStr};
+use png::ColorType;
+use std::{
+    fs::File,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
+pub struct Color<T> {
+    pub r: T,
+    pub g: T,
+    pub b: T,
+    pub a: T,
 }
 
-impl Color {
-    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
+impl<T> Color<T> {
+    pub fn new(r: T, g: T, b: T, a: T) -> Color<T> {
         Color { r, g, b, a }
     }
 }
 
-impl Default for Color {
+// 生値保存用
+type Color8 = Color<u8>;
+// 計算用
+type Color64 = Color<usize>;
+
+impl Add<Color64> for Color64 {
+    type Output = Color64;
+
+    fn add(self, rhs: Color64) -> Self::Output {
+        Color64 {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a + rhs.a,
+        }
+    }
+}
+
+impl AddAssign<Color64> for Color64 {
+    fn add_assign(&mut self, rhs: Color64) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+        self.a += rhs.a;
+    }
+}
+
+impl Add<usize> for Color64 {
+    type Output = Color64;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        Color64 {
+            r: self.r + rhs,
+            g: self.g + rhs,
+            b: self.b + rhs,
+            a: self.a + rhs,
+        }
+    }
+}
+
+impl AddAssign<usize> for Color64 {
+    fn add_assign(&mut self, rhs: usize) {
+        self.r += rhs;
+        self.g += rhs;
+        self.b += rhs;
+        self.a += rhs;
+    }
+}
+
+impl Mul<usize> for Color64 {
+    type Output = Color64;
+
+    fn mul(self, rhs: usize) -> Self::Output {
+        Color64 {
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
+            a: self.a * rhs,
+        }
+    }
+}
+
+impl MulAssign<usize> for Color64 {
+    fn mul_assign(&mut self, rhs: usize) {
+        self.r *= rhs;
+        self.g *= rhs;
+        self.b *= rhs;
+        self.a *= rhs;
+    }
+}
+
+impl Div<usize> for Color64 {
+    type Output = Color64;
+
+    fn div(self, rhs: usize) -> Self::Output {
+        Color64 {
+            r: self.r / rhs,
+            g: self.g / rhs,
+            b: self.b / rhs,
+            a: self.a / rhs,
+        }
+    }
+}
+
+impl DivAssign<usize> for Color64 {
+    fn div_assign(&mut self, rhs: usize) {
+        self.r /= rhs;
+        self.g /= rhs;
+        self.b /= rhs;
+        self.a /= rhs;
+    }
+}
+
+impl Color64 {
+    pub fn to8(&self) -> Color<u8> {
+        Color {
+            r: self.r as u8,
+            g: self.g as u8,
+            b: self.b as u8,
+            a: self.a as u8,
+        }
+    }
+
+    pub fn abs_diff(&self, rhs: &Color64) -> Color64 {
+        Color {
+            r: self.r.abs_diff(rhs.r),
+            g: self.g.abs_diff(rhs.g),
+            b: self.b.abs_diff(rhs.b),
+            a: self.a.abs_diff(rhs.a),
+        }
+    }
+
+    pub fn square(&self) -> Color64 {
+        Color {
+            r: self.r * self.r,
+            g: self.g * self.g,
+            b: self.b * self.b,
+            a: self.a * self.a,
+        }
+    }
+
+    pub fn horizontal_add(&self) -> usize {
+        self.r + self.g + self.b + self.a
+    }
+}
+
+impl Color8 {
+    pub fn to64(&self) -> Color<usize> {
+        Color {
+            r: self.r as usize,
+            g: self.g as usize,
+            b: self.b as usize,
+            a: self.a as usize,
+        }
+    }
+}
+
+impl Default for Color<u8> {
     fn default() -> Self {
         Self {
             r: 255,
@@ -29,7 +169,7 @@ impl Default for Color {
 pub struct Image {
     pub height: usize,
     pub width: usize,
-    pub buffer: Vec<Color>,
+    pub buffer: Vec<Color8>,
 }
 
 impl Image {
@@ -58,59 +198,35 @@ impl Image {
         }
     }
 
-    pub fn color_of_pos(&self, pos: &Pos) -> Color {
+    pub fn color_of_pos(&self, pos: &Pos) -> Color8 {
         self.buffer[pos.y * self.width + pos.x]
     }
 
-    pub fn color_of(&self, y: usize, x: usize) -> Color {
+    pub fn color_of(&self, y: usize, x: usize) -> Color8 {
         self.buffer[y * self.width + x]
     }
 
-    pub fn mean_color(&self, rect: &Rectangle) -> Color {
-        let mut r_sum = 0;
-        let mut g_sum = 0;
-        let mut b_sum = 0;
-        let mut a_sum = 0;
+    pub fn mean_color(&self, rect: &Rectangle) -> Color8 {
+        let mut sum = Color64::new(0, 0, 0, 0);
         for y in rect.bottom()..=rect.top() {
             for x in rect.left()..=rect.right() {
-                let color = self.color_of(y, x);
-                r_sum += color.r as usize;
-                g_sum += color.g as usize;
-                b_sum += color.b as usize;
-                a_sum += color.a as usize;
+                sum += self.color_of(y, x).to64();
             }
         }
-        r_sum = (r_sum + rect.size() / 2) / rect.size();
-        g_sum = (g_sum + rect.size() / 2) / rect.size();
-        b_sum = (b_sum + rect.size() / 2) / rect.size();
-        a_sum = (a_sum + rect.size() / 2) / rect.size();
-
-        Color::new(r_sum as u8, g_sum as u8, b_sum as u8, a_sum as u8)
+        ((sum + rect.size() / 2) / rect.size()).to8()
     }
 
-    pub fn rmse(&self, rect: &Rectangle, target_color: &Color) -> usize {
-        let mut r_sum = 0;
-        let mut g_sum = 0;
-        let mut b_sum = 0;
-        let mut a_sum = 0;
+    pub fn rmse(&self, rect: &Rectangle, target_color: &Color8) -> usize {
+        let mut sum = Color64::new(0, 0, 0, 0);
+        let target_color = target_color.to64();
+
         for y in rect.bottom()..=rect.top() {
             for x in rect.left()..=rect.right() {
-                let color = self.color_of(y, x);
-
-                let dr = color.r.abs_diff(target_color.r) as usize;
-                r_sum += dr * dr;
-
-                let dg = color.g.abs_diff(target_color.g) as usize;
-                g_sum += dg * dg;
-
-                let db = color.b.abs_diff(target_color.b) as usize;
-                b_sum += db * db;
-
-                let da = color.a.abs_diff(target_color.a) as usize;
-                a_sum += da * da;
+                let color = self.color_of(y, x).to64();
+                sum += color.abs_diff(&target_color).square();
             }
         }
-        r_sum + g_sum + b_sum + a_sum
+        sum.horizontal_add()
     }
 }
 
@@ -202,7 +318,7 @@ impl Rectangle {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Block {
     pub rect: Rectangle,
-    pub color: Color,
+    pub color: Color8,
     // 操作元のブロック index
     pub parent: Option<usize>,
     // 出力用
@@ -305,7 +421,7 @@ pub enum Command {
     // block_idx, (x, y)
     PointSplit(usize, Pos),
     // block_index, prev_color, color
-    Color(usize, Color, Color),
+    Color(usize, Color8, Color8),
 }
 
 impl Command {
@@ -334,7 +450,7 @@ impl State {
                 height,
                 width,
             },
-            color: Color::default(),
+            color: Color8::default(),
             parent: None,
             id: 0,
             is_child: true,
@@ -386,7 +502,7 @@ impl State {
         self.command_list.pop();
     }
 
-    fn color(&mut self, block_index: usize, prev_color: &Color, color: &Color) {
+    fn color(&mut self, block_index: usize, prev_color: &Color8, color: &Color8) {
         assert!(block_index < self.block_list.len());
         assert!(self.block_list[block_index].color == *prev_color);
         self.block_list[block_index].color = *color;
