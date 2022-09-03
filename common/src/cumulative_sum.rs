@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
-use crate::problem::{Color64, Color8, Image};
+use crate::problem::{Color64, Color8, Image, State};
 
 pub struct CumulativeRMSESum {
     mean_sum: CumulativeSum<Color64>,
@@ -8,18 +8,22 @@ pub struct CumulativeRMSESum {
 }
 
 impl CumulativeRMSESum {
-    pub fn new(image: &Image) -> CumulativeRMSESum {
+    pub fn new(image: &Image, state: &State) -> CumulativeRMSESum {
         let height = image.height;
         let width = image.width;
+
+        let state_data = state.to_color_buffer();
 
         let mut data = vec![vec![Color64::default(); width]; height];
         let mut squared_data = vec![vec![Color64::default(); width]; height];
 
         for y in 0..height {
             for x in 0..width {
-                let color = image.color_of(y, x).to64();
-                data[y][x] = color;
-                squared_data[y][x] = color.square();
+                let target_color = image.color_of(y, x).to64();
+                let state_color = state_data[y][x].to64();
+                let diff = target_color - state_color;
+                data[y][x] = diff;
+                squared_data[y][x] = diff.square();
             }
         }
 
@@ -90,6 +94,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::problem::Command;
+
     use super::*;
 
     #[test]
@@ -124,7 +130,13 @@ mod tests {
             ],
         };
 
-        let rmse_calculator = CumulativeRMSESum::new(&image);
+        let mut state = State::new(3, 3);
+        state.apply(Command::Color(
+            0,
+            Color8::new(255, 255, 255, 255),
+            Color8::new(0, 0, 0, 0),
+        ));
+        let rmse_calculator = CumulativeRMSESum::new(&image, &state);
         let ret = rmse_calculator.range_rmse(1, 1, 3, 3);
 
         let mean = (2.0 + 3.0 + 3.0 + 4.0) / 4.0f64;

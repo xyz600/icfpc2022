@@ -685,6 +685,24 @@ impl State {
             }
         }
     }
+
+    pub fn to_color_buffer(&self) -> Vec<Vec<Color8>> {
+        let width = self.block_list[0].rect.width;
+        let height = self.block_list[0].rect.height;
+
+        let mut ret = vec![vec![Color8::default(); width]; height];
+        // FIXME: 色の変化があったブロックを追従する
+        for block in self.block_list.iter() {
+            let rect = block.rect;
+            for y in rect.bottom()..=rect.top() {
+                for x in rect.left()..=rect.right() {
+                    ret[y][x] = block.color;
+                }
+            }
+        }
+
+        ret
+    }
 }
 
 #[cfg(test)]
@@ -757,9 +775,11 @@ mod tests {
 
 pub fn evaluate(state: &State, image: &Image) -> f64 {
     let mut pixel_cost = 0f64;
-    for block in state.block_list.iter() {
-        if block.is_child {
-            pixel_cost += image.rmse(&block.rect, &block.color);
+    let state_image = state.to_color_buffer();
+    for y in 0..image.height {
+        for x in 0..image.width {
+            let diff = state_image[y][x].to64() - image.color_of(y, x).to64();
+            pixel_cost += diff.square().horizontal_add().sqrt()
         }
     }
 
