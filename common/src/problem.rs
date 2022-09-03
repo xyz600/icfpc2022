@@ -1,7 +1,9 @@
 use png::ColorType;
 use std::{
     fs::File,
+    io::BufWriter,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+    path::Path,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -687,6 +689,31 @@ impl State {
         }
     }
 
+    pub fn save_image(&self, image_fliepath: &String) {
+        let path = Path::new(image_fliepath);
+        let file = File::create(path).unwrap();
+        let ref mut writer = BufWriter::new(file);
+        let data = self.to_color_buffer();
+        let height = data.len();
+        let width = data[0].len();
+        let mut encoder = png::Encoder::new(writer, width as u32, height as u32);
+
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_trns(vec![0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8]);
+        let mut writer = encoder.write_header().unwrap();
+
+        let mut raw_data = vec![];
+        for y in (0..height).rev() {
+            for x in 0..width {
+                let color = data[y][x];
+                let mut color_data = vec![color.r, color.g, color.b, color.a];
+                raw_data.append(&mut color_data);
+            }
+        }
+        writer.write_image_data(&raw_data).unwrap();
+    }
+
     pub fn print_output(&self) {
         let restore_id_sequence = |block_index: usize| -> String {
             let mut id_list = vec![];
@@ -831,6 +858,7 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
         let block_index = cmd.block_index();
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
+    eprintln!("(pixel, command) = ({}, {})", pixel_cost, command_cost);
 
     pixel_cost + command_cost as f64
 }
