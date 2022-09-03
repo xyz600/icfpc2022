@@ -867,8 +867,9 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
         let block_index = cmd.block_index();
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
+    pixel_cost = (pixel_cost * ALPHA).round();
     eprintln!("(pixel, commaned) = ({}, {})", pixel_cost, command_cost);
     const ALPHA: f64 = 0.005;
 
-    (pixel_cost * ALPHA).round() + command_cost as f64
+    pixel_cost + command_cost as f64
 }
