@@ -152,18 +152,6 @@ fn solve(image: &Image) -> State {
             break;
         }
     }
-
-    // 最後の色塗り
-    if false {
-        for index in 0..state.block_list.len() {
-            if state.block_list[index].is_child {
-                let rect = state.block_list[index].rect;
-                let best_color =
-                    cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1);
-                state.apply(Command::Color(index, best_color));
-            }
-        }
-    }
     state
 }
 

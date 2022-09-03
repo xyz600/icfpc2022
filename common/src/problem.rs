@@ -749,6 +749,9 @@ impl State {
                     println!("cut [{}] [{}, {}]", block_id, pos.x, pos.y);
                 }
                 CommandWithLog::Color(block_index, _, color) => {
+                    if !self.block_list[block_index].is_child {
+                        continue;
+                    }
                     let block_id = restore_id_sequence(block_index);
                     println!(
                         "color [{}] [{}, {}, {}, {}] ",
