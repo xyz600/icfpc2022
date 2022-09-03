@@ -236,14 +236,17 @@ impl Image {
         let height = info.height as usize;
         let width = info.width as usize;
         let mut buffer = vec![Color8::default(); height * width];
-        for y in (0..height).rev() {
+        for y in 0..height {
             for x in 0..width {
                 let i = y * width + x;
                 let r = raw_buffer[4 * i];
                 let g = raw_buffer[4 * i + 1];
                 let b = raw_buffer[4 * i + 2];
                 let a = raw_buffer[4 * i + 3];
-                buffer[i] = Color::new(r, g, b, a);
+
+                // as bottom is origin
+                let dst_i = (height - 1 - y) * width + x;
+                buffer[dst_i] = Color::new(r, g, b, a);
             }
         }
         Image {
