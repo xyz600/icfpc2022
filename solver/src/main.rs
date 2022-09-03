@@ -38,9 +38,9 @@ fn solve(image: &Image) -> State {
 
     let mut exact_eval = evaluate(image, &state);
 
-    loop {
+    for turn in 0.. {
         let mut best_command = None;
-        let mut best_eval = 0f64;
+        let mut best_gain = 0f64;
 
         for block_index in 0..state.block_list.len() {
             if !state.block_list[block_index].is_child {
@@ -56,9 +56,9 @@ fn solve(image: &Image) -> State {
             for y in rect.bottom() + 1..rect.top() {
                 let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1)
                     + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
-                let eval = before_rmse - after_rmse.horizontal_add();
-                if best_eval < eval {
-                    best_eval = eval;
+                let gain = before_rmse - after_rmse.horizontal_add();
+                if best_gain < gain {
+                    best_gain = gain;
                     best_command = Some(Command::HorizontalSplit(block_index, y));
                 }
             }
@@ -67,9 +67,9 @@ fn solve(image: &Image) -> State {
             for x in rect.left() + 1..rect.right() {
                 let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x)
                     + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
-                let eval = before_rmse - after_rmse.horizontal_add();
-                if best_eval < eval {
-                    best_eval = eval;
+                let gain = before_rmse - after_rmse.horizontal_add();
+                if best_gain < gain {
+                    best_gain = gain;
                     best_command = Some(Command::VerticalSplit(block_index, x));
                 }
             }
@@ -81,9 +81,9 @@ fn solve(image: &Image) -> State {
                         + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1)
                         + cum.range_rmse(y, x, rect.top() + 1, rect.right() + 1)
                         + cum.range_rmse(y, rect.left(), rect.top(), x);
-                    let eval = before_rmse - after_rmse.horizontal_add();
-                    if best_eval < eval {
-                        best_eval = eval;
+                    let gain = before_rmse - after_rmse.horizontal_add();
+                    if best_gain < gain {
+                        best_gain = gain;
                         best_command = Some(Command::PointSplit(block_index, Pos::new(y, x)));
                     }
                 }
@@ -92,6 +92,9 @@ fn solve(image: &Image) -> State {
             // 4. 横線2本 + 3色
             // 5. 縦線2本 + 3色
         }
+
+        eprintln!("    best_gain = {}", best_gain);
+        eprintln!("    command: {:?}", best_command);
 
         if let Some(command) = best_command {
             state.apply(command);
@@ -134,14 +137,15 @@ fn solve(image: &Image) -> State {
                 }
             };
             let next_exact_eval = evaluate(image, &state);
-            // 厳密コスト計算だけして、色塗りは一番最後に全部やる
-            for _iter in 0..undo_count {
-                state.undo();
-            }
+            eprintln!("update {} -> {}", exact_eval, next_exact_eval);
             if next_exact_eval > exact_eval {
-                // 厳密コストが改善しないので、最後に行ったコマンドも undo して停止
-                state.undo();
+                // 厳密コスト計算だけして、色塗りは一番最後に全部やる
+                for _iter in 0..undo_count + 1 {
+                    state.undo();
+                }
                 break;
+            } else {
+                exact_eval = next_exact_eval;
             }
         } else {
             // そもそも色の誤差が減らないなら継続の意味がない
@@ -150,12 +154,14 @@ fn solve(image: &Image) -> State {
     }
 
     // 最後の色塗り
-    for index in 0..state.block_list.len() {
-        if state.block_list[index].is_child {
-            let rect = state.block_list[index].rect;
-            let best_color =
-                cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1);
-            state.apply(Command::Color(index, best_color));
+    if false {
+        for index in 0..state.block_list.len() {
+            if state.block_list[index].is_child {
+                let rect = state.block_list[index].rect;
+                let best_color =
+                    cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1);
+                state.apply(Command::Color(index, best_color));
+            }
         }
     }
     state
