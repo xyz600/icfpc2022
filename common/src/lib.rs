@@ -1,10 +1,10 @@
 use png::ColorType;
 use std::{
     fs::File,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Color<T> {
     pub r: T,
     pub g: T,
@@ -21,7 +21,7 @@ impl<T> Color<T> {
 // 生値保存用
 type Color8 = Color<u8>;
 // 計算用
-type Color64 = Color<usize>;
+type Color64 = Color<f64>;
 
 impl Add<Color64> for Color64 {
     type Output = Color64;
@@ -45,10 +45,10 @@ impl AddAssign<Color64> for Color64 {
     }
 }
 
-impl Add<usize> for Color64 {
+impl Add<f64> for Color64 {
     type Output = Color64;
 
-    fn add(self, rhs: usize) -> Self::Output {
+    fn add(self, rhs: f64) -> Self::Output {
         Color64 {
             r: self.r + rhs,
             g: self.g + rhs,
@@ -58,8 +58,8 @@ impl Add<usize> for Color64 {
     }
 }
 
-impl AddAssign<usize> for Color64 {
-    fn add_assign(&mut self, rhs: usize) {
+impl AddAssign<f64> for Color64 {
+    fn add_assign(&mut self, rhs: f64) {
         self.r += rhs;
         self.g += rhs;
         self.b += rhs;
@@ -67,10 +67,54 @@ impl AddAssign<usize> for Color64 {
     }
 }
 
-impl Mul<usize> for Color64 {
+impl Sub<f64> for Color64 {
     type Output = Color64;
 
-    fn mul(self, rhs: usize) -> Self::Output {
+    fn sub(self, rhs: f64) -> Self::Output {
+        Color64 {
+            r: self.r - rhs,
+            g: self.g - rhs,
+            b: self.b - rhs,
+            a: self.a - rhs,
+        }
+    }
+}
+
+impl Sub<Color64> for Color64 {
+    type Output = Color64;
+
+    fn sub(self, rhs: Color64) -> Self::Output {
+        Color64 {
+            r: self.r - rhs.r,
+            g: self.g - rhs.g,
+            b: self.b - rhs.b,
+            a: self.a - rhs.a,
+        }
+    }
+}
+
+impl SubAssign<f64> for Color64 {
+    fn sub_assign(&mut self, rhs: f64) {
+        self.r -= rhs;
+        self.g -= rhs;
+        self.b -= rhs;
+        self.a -= rhs;
+    }
+}
+
+impl SubAssign<Color64> for Color64 {
+    fn sub_assign(&mut self, rhs: Color64) {
+        self.r -= rhs.r;
+        self.g -= rhs.g;
+        self.b -= rhs.b;
+        self.a -= rhs.a;
+    }
+}
+
+impl Mul<f64> for Color64 {
+    type Output = Color64;
+
+    fn mul(self, rhs: f64) -> Self::Output {
         Color64 {
             r: self.r * rhs,
             g: self.g * rhs,
@@ -80,8 +124,8 @@ impl Mul<usize> for Color64 {
     }
 }
 
-impl MulAssign<usize> for Color64 {
-    fn mul_assign(&mut self, rhs: usize) {
+impl MulAssign<f64> for Color64 {
+    fn mul_assign(&mut self, rhs: f64) {
         self.r *= rhs;
         self.g *= rhs;
         self.b *= rhs;
@@ -89,10 +133,10 @@ impl MulAssign<usize> for Color64 {
     }
 }
 
-impl Div<usize> for Color64 {
+impl Div<f64> for Color64 {
     type Output = Color64;
 
-    fn div(self, rhs: usize) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         Color64 {
             r: self.r / rhs,
             g: self.g / rhs,
@@ -102,8 +146,8 @@ impl Div<usize> for Color64 {
     }
 }
 
-impl DivAssign<usize> for Color64 {
-    fn div_assign(&mut self, rhs: usize) {
+impl DivAssign<f64> for Color64 {
+    fn div_assign(&mut self, rhs: f64) {
         self.r /= rhs;
         self.g /= rhs;
         self.b /= rhs;
@@ -121,15 +165,6 @@ impl Color64 {
         }
     }
 
-    pub fn abs_diff(&self, rhs: &Color64) -> Color64 {
-        Color {
-            r: self.r.abs_diff(rhs.r),
-            g: self.g.abs_diff(rhs.g),
-            b: self.b.abs_diff(rhs.b),
-            a: self.a.abs_diff(rhs.a),
-        }
-    }
-
     pub fn square(&self) -> Color64 {
         Color {
             r: self.r * self.r,
@@ -139,21 +174,38 @@ impl Color64 {
         }
     }
 
-    pub fn horizontal_add(&self) -> usize {
+    pub fn round(&self) -> Color64 {
+        Color {
+            r: self.r.round(),
+            g: self.g.round(),
+            b: self.b.round(),
+            a: self.a.round(),
+        }
+    }
+
+    pub fn horizontal_add(&self) -> f64 {
         self.r + self.g + self.b + self.a
     }
 }
 
 impl Color8 {
-    pub fn to64(&self) -> Color<usize> {
+    pub fn to64(&self) -> Color64 {
         Color {
-            r: self.r as usize,
-            g: self.g as usize,
-            b: self.b as usize,
-            a: self.a as usize,
+            r: self.r as f64,
+            g: self.g as f64,
+            b: self.b as f64,
+            a: self.a as f64,
         }
     }
 }
+
+impl PartialEq for Color8 {
+    fn eq(&self, other: &Self) -> bool {
+        self.r == other.r && self.g == other.g && self.b == other.b && self.a == other.a
+    }
+}
+
+impl Eq for Color8 {}
 
 impl Default for Color<u8> {
     fn default() -> Self {
@@ -198,6 +250,10 @@ impl Image {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.height * self.width
+    }
+
     pub fn color_of_pos(&self, pos: &Pos) -> Color8 {
         self.buffer[pos.y * self.width + pos.x]
     }
@@ -207,26 +263,26 @@ impl Image {
     }
 
     pub fn mean_color(&self, rect: &Rectangle) -> Color8 {
-        let mut sum = Color64::new(0, 0, 0, 0);
+        let mut sum = Color64::new(0f64, 0f64, 0f64, 0f64);
         for y in rect.bottom()..=rect.top() {
             for x in rect.left()..=rect.right() {
                 sum += self.color_of(y, x).to64();
             }
         }
-        ((sum + rect.size() / 2) / rect.size()).to8()
+        (sum / rect.size() as f64).to8()
     }
 
-    pub fn rmse(&self, rect: &Rectangle, target_color: &Color8) -> usize {
-        let mut sum = Color64::new(0, 0, 0, 0);
+    pub fn rmse(&self, rect: &Rectangle, target_color: &Color8) -> f64 {
         let target_color = target_color.to64();
 
+        let mut sum = 0f64;
         for y in rect.bottom()..=rect.top() {
             for x in rect.left()..=rect.right() {
                 let color = self.color_of(y, x).to64();
-                sum += color.abs_diff(&target_color).square();
+                sum += (color - target_color).square().horizontal_add().sqrt();
             }
         }
-        sum.horizontal_add()
+        sum
     }
 }
 
@@ -420,7 +476,7 @@ pub enum Command {
     VerticalSplit(usize, usize),
     // block_idx, (x, y)
     PointSplit(usize, Pos),
-    // block_index, prev_color, color
+    // block_idx, prev_color, color
     Color(usize, Color8, Color8),
 }
 
@@ -431,6 +487,15 @@ impl Command {
             Command::VerticalSplit(_, _) => 7,
             Command::PointSplit(_, _) => 10,
             Command::Color(_, _, _) => 5,
+        }
+    }
+
+    pub fn block_index(&self) -> usize {
+        match *self {
+            Command::HorizontalSplit(block_index, _) => block_index,
+            Command::VerticalSplit(block_index, _) => block_index,
+            Command::PointSplit(block_index, _) => block_index,
+            Command::Color(block_index, _, _) => block_index,
         }
     }
 }
@@ -663,13 +728,20 @@ mod tests {
     }
 }
 
-pub fn evaluate(state: &State, image: &Image) -> usize {
-    let mut pixel_cost = 0;
+pub fn evaluate(state: &State, image: &Image) -> f64 {
+    let mut pixel_cost = 0f64;
     for block in state.block_list.iter() {
-        if block.is_child {}
+        if block.is_child {
+            pixel_cost += image.rmse(&block.rect, &block.color);
+        }
     }
 
     let mut command_cost = 0;
+    for cmd in state.command_list.iter() {
+        let base_cost = cmd.base_cost();
+        let block_index = cmd.block_index();
+        command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
+    }
 
-    pixel_cost + command_cost
+    pixel_cost.sqrt() + command_cost as f64
 }

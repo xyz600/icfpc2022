@@ -4,22 +4,9 @@ use common::*;
 fn solve(image: &Image) -> State {
     let mut state = State::new(image.height, image.width);
 
-    state.apply(Command::PointSplit(0, Pos::new(100, 100)));
-    for i in 1..5 {
-        let parent_color = state.block_list[0].color;
-        state.apply(Command::Color(
-            i,
-            parent_color,
-            Color::new(32 * i as u8, 32 * i as u8, 32 * i as u8, 32 * i as u8),
-        ));
-    }
+    // 貪欲法
 
-    state.apply(Command::HorizontalSplit(4, 300));
-    state.apply(Command::Color(
-        6,
-        state.block_list[6].color,
-        Color::new(0, 0, 128, 192),
-    ));
+    // エッジ検出
 
     state
 }
