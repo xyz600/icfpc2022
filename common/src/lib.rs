@@ -7,8 +7,14 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn new() -> Color {
-        Color {
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
+        Color { r, g, b, a }
+    }
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self {
             r: 255,
             g: 255,
             b: 255,
@@ -104,7 +110,7 @@ impl Rectangle {
 }
 
 /// FIXME: merge 操作を特別視する. enum 用意する？
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Block {
     pub rect: Rectangle,
     pub color: Color,
@@ -199,16 +205,24 @@ impl Block {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Command {}
+/// 最終的に出力する内容に関わるもの
+/// FIXME: color の prev_color を消す
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum Command {
+    // block_idx, y
+    HorizontalSplit(usize, usize),
+    // block_idx, x
+    VerticalSplit(usize, usize),
+    // block_idx, (x, y)
+    PointSplit(usize, Pos),
+    // block_index, prev_color, color
+    Color(usize, Color, Color),
+}
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum CommandLog {}
-
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct State {
     pub block_list: Vec<Block>,
-    pub command_list: Vec<CommandLog>,
+    pub command_list: Vec<Command>,
     pub max_block_id: usize,
 }
 
@@ -220,7 +234,7 @@ impl State {
                 height,
                 width,
             },
-            color: Color::new(),
+            color: Color::default(),
             parent: None,
             id: 0,
             is_child: true,
@@ -233,13 +247,90 @@ impl State {
         }
     }
 
-    pub fn point_cut(&mut self, block_id: usize, pos: &Pos) {
-        assert!(block_id < self.block_list.len());
-        let mut parent_block = &mut self.block_list[block_id];
-        assert!(parent_block.id == block_id);
+    pub fn apply(&mut self, cmd: Command) {
+        match cmd {
+            Command::HorizontalSplit(block_index, y) => self.horizontal_split(block_index, y),
+            Command::VerticalSplit(block_index, x) => self.vertical_split(block_index, x),
+            Command::PointSplit(block_index, pos) => self.point_cut(block_index, &pos),
+            Command::Color(block_index, prev_color, color) => {
+                self.color(block_index, &prev_color, &color)
+            }
+        }
+        self.command_list.push(cmd);
+    }
+
+    pub fn undo(&mut self) {
+        assert!(!self.command_list.is_empty());
+        match *self.command_list.last().unwrap() {
+            Command::HorizontalSplit(block_index, _) | Command::VerticalSplit(block_index, _) => {
+                for _ in 0..2 {
+                    assert!(self.block_list.last().unwrap().parent.unwrap() == block_index);
+                    self.block_list.pop();
+                }
+                assert!(!self.block_list[block_index].is_child);
+                self.block_list[block_index].is_child = true;
+            }
+            Command::PointSplit(block_index, _) => {
+                for _ in 0..4 {
+                    assert!(self.block_list.last().unwrap().parent.unwrap() == block_index);
+                    self.block_list.pop();
+                }
+                assert!(!self.block_list[block_index].is_child);
+                self.block_list[block_index].is_child = true;
+            }
+            Command::Color(block_index, prev_color, _) => {
+                assert!(self.block_list[block_index].is_child);
+                self.block_list[block_index].color = prev_color;
+            }
+        }
+        self.command_list.pop();
+    }
+
+    pub fn color(&mut self, block_index: usize, prev_color: &Color, color: &Color) {
+        assert!(block_index < self.block_list.len());
+        assert!(self.block_list[block_index].color == *prev_color);
+        self.block_list[block_index].color = *color;
+    }
+
+    pub fn horizontal_split(&mut self, block_index: usize, y: usize) {
+        assert!(block_index < self.block_list.len());
+        let len = self.block_list.len();
+        let mut parent_block = &mut self.block_list[block_index];
+        assert!(parent_block.index_of == block_index);
+        assert!(parent_block.rect.bottom() < y && y < parent_block.rect.top());
+        parent_block.is_child = false;
+
+        let (bottom_block, top_block) = parent_block.horizontal_split(y, len);
+        self.block_list.push(bottom_block);
+        self.block_list.push(top_block);
+    }
+
+    pub fn vertical_split(&mut self, block_index: usize, x: usize) {
+        assert!(block_index < self.block_list.len());
+        let len = self.block_list.len();
+        let mut parent_block = &mut self.block_list[block_index];
+        assert!(parent_block.index_of == block_index);
+        assert!(parent_block.rect.left() < x && x < parent_block.rect.right());
+        parent_block.is_child = false;
+
+        let (left_block, right_block) = parent_block.vertical_split(x, len);
+        self.block_list.push(left_block);
+        self.block_list.push(right_block);
+    }
+
+    pub fn point_cut(&mut self, block_index: usize, pos: &Pos) {
+        assert!(block_index < self.block_list.len());
+        let len = self.block_list.len();
+        let mut parent_block = &mut self.block_list[block_index];
+        assert!(parent_block.index_of == block_index);
         assert!(parent_block.rect.is_internal(pos));
         assert!(parent_block.is_child);
         parent_block.is_child = false;
+
+        let (bl, br, ur, ul) = parent_block.point_split(pos, len);
+        for block in [bl, br, ur, ul] {
+            self.block_list.push(block);
+        }
     }
 }
 
@@ -276,5 +367,37 @@ mod tests {
 
         let expected_tl = Rectangle::new(9, 5, 6, 4);
         assert_eq!(tl, expected_tl);
+    }
+
+    #[test]
+    fn test_state_undo() {
+        let mut state = State::new(400, 400);
+        state.apply(Command::PointSplit(0, Pos::new(200, 200)));
+        assert_eq!(state.block_list.len(), 5);
+
+        let mut clone = state.clone();
+        clone.apply(Command::HorizontalSplit(1, 100));
+        assert_eq!(clone.block_list.len(), 7);
+        clone.undo();
+        assert_eq!(state, clone);
+
+        clone.apply(Command::VerticalSplit(1, 100));
+        assert_eq!(clone.block_list.len(), 7);
+        clone.undo();
+        assert_eq!(state, clone);
+
+        clone.apply(Command::PointSplit(1, Pos::new(50, 50)));
+        assert_eq!(clone.block_list.len(), 9);
+        clone.undo();
+        assert_eq!(state, clone);
+
+        clone.apply(Command::Color(
+            1,
+            clone.block_list[1].color,
+            Color::new(128, 128, 128, 128),
+        ));
+        assert_eq!(clone.block_list.len(), 5);
+        clone.undo();
+        assert_eq!(state, clone);
     }
 }
