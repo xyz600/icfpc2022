@@ -58,8 +58,59 @@ impl Image {
         }
     }
 
-    pub fn color(&self, pos: &Pos) -> Color {
+    pub fn color_of_pos(&self, pos: &Pos) -> Color {
         self.buffer[pos.y * self.width + pos.x]
+    }
+
+    pub fn color_of(&self, y: usize, x: usize) -> Color {
+        self.buffer[y * self.width + x]
+    }
+
+    pub fn mean_color(&self, rect: &Rectangle) -> Color {
+        let mut r_sum = 0;
+        let mut g_sum = 0;
+        let mut b_sum = 0;
+        let mut a_sum = 0;
+        for y in rect.bottom()..=rect.top() {
+            for x in rect.left()..=rect.right() {
+                let color = self.color_of(y, x);
+                r_sum += color.r as usize;
+                g_sum += color.g as usize;
+                b_sum += color.b as usize;
+                a_sum += color.a as usize;
+            }
+        }
+        r_sum = (r_sum + rect.size() / 2) / rect.size();
+        g_sum = (g_sum + rect.size() / 2) / rect.size();
+        b_sum = (b_sum + rect.size() / 2) / rect.size();
+        a_sum = (a_sum + rect.size() / 2) / rect.size();
+
+        Color::new(r_sum as u8, g_sum as u8, b_sum as u8, a_sum as u8)
+    }
+
+    pub fn rmse(&self, rect: &Rectangle, target_color: &Color) -> usize {
+        let mut r_sum = 0;
+        let mut g_sum = 0;
+        let mut b_sum = 0;
+        let mut a_sum = 0;
+        for y in rect.bottom()..=rect.top() {
+            for x in rect.left()..=rect.right() {
+                let color = self.color_of(y, x);
+
+                let dr = color.r.abs_diff(target_color.r) as usize;
+                r_sum += dr * dr;
+
+                let dg = color.g.abs_diff(target_color.g) as usize;
+                g_sum += dg * dg;
+
+                let db = color.b.abs_diff(target_color.b) as usize;
+                b_sum += db * db;
+
+                let da = color.a.abs_diff(target_color.a) as usize;
+                a_sum += da * da;
+            }
+        }
+        r_sum + g_sum + b_sum + a_sum
     }
 }
 
@@ -102,6 +153,10 @@ impl Rectangle {
     }
     pub fn top(&self) -> usize {
         self.bottom_left.y + self.height - 1
+    }
+
+    pub fn size(&self) -> usize {
+        self.height * self.width
     }
 
     /// 辺上に存在するのは ok
@@ -490,4 +545,15 @@ mod tests {
         clone.undo();
         assert_eq!(state, clone);
     }
+}
+
+pub fn evaluate(state: &State, image: &Image) -> usize {
+    let mut pixel_cost = 0;
+    for block in state.block_list.iter() {
+        if block.is_child {}
+    }
+
+    let mut command_cost = 0;
+
+    pixel_cost + command_cost
 }

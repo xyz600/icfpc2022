@@ -1,7 +1,7 @@
 use clap::{App, Arg};
 use common::*;
 
-fn solve(image: Image) -> State {
+fn solve(image: &Image) -> State {
     let mut state = State::new(image.height, image.width);
 
     state.apply(Command::PointSplit(0, Pos::new(100, 100)));
@@ -43,6 +43,6 @@ fn main() {
     let input_filepath = matches.value_of("input-filepath").unwrap();
     let image = Image::new(input_filepath);
 
-    let final_state = solve(image);
+    let final_state = solve(&image);
     final_state.print_output();
 }
