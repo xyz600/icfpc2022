@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "solver",
+    "common",
+    "checker",
+]
