@@ -113,6 +113,19 @@ impl SubAssign<Color64> for Color64 {
     }
 }
 
+impl Mul<Color64> for Color64 {
+    type Output = Color64;
+
+    fn mul(self, rhs: Color64) -> Self::Output {
+        Color64 {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+            a: self.a * rhs.a,
+        }
+    }
+}
+
 impl Mul<f64> for Color64 {
     type Output = Color64;
 
@@ -191,6 +204,15 @@ impl Color64 {
             g: self.g.sqrt(),
             b: self.b.sqrt(),
             a: self.a.sqrt(),
+        }
+    }
+
+    pub fn abs(&self) -> Color64 {
+        Color {
+            r: self.r.abs(),
+            g: self.g.abs(),
+            b: self.b.abs(),
+            a: self.a.abs(),
         }
     }
 
@@ -857,11 +879,18 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
 
     let mut command_cost = 0;
     for cmd in state.command_list.iter() {
+        if let CommandWithLog::Color(block_index, _, _) = cmd {
+            // is_child でなければ色を塗る必要がない
+            if !state.block_list[*block_index].is_child {
+                continue;
+            }
+        }
         let base_cost = cmd.base_cost();
         let block_index = cmd.block_index();
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
-    eprintln!("(pixel, command) = ({}, {})", pixel_cost, command_cost);
+    pixel_cost = (pixel_cost * ALPHA).round();
+    const ALPHA: f64 = 0.005;
 
     pixel_cost + command_cost as f64
 }
