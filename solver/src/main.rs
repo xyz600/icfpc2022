@@ -78,8 +78,8 @@ fn solve(image: &Image) -> State {
             // 3. 点1つ + 4色
             for y in rect.bottom() + 1..rect.top() {
                 for x in rect.left() + 1..rect.right() {
-                    let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x)
-                        + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1)
+                    let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), y, x)
+                        + cum.range_rmse(rect.bottom(), x, y, rect.right() + 1)
                         + cum.range_rmse(y, x, rect.top() + 1, rect.right() + 1)
                         + cum.range_rmse(y, rect.left(), rect.top(), x);
                     let gain = before_rmse - after_rmse.horizontal_add();
