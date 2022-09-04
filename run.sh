@@ -9,7 +9,7 @@ cargo build --release --bin solver
 cp target/release/solver ./solver_bin
 
 # single experiment
-dataset="`seq 1 25` `seq 36 40`"
+dataset="`seq 4 25` `seq 36 40`"
 echo $dataset
 parallel --progress --result result ./solver_bin -i {} -s 6 ::: $dataset &
 
@@ -19,7 +19,7 @@ parallel --progress --result result ./solver_bin -i {} -s 5 -t ::: $dataset_twin
 
 wait
 
-for i in `seq 1 40` ; do
+for i in `seq 4 40` ; do
     cp result/1/${i}/stdout solution/${i}.txt
 done
 
