@@ -210,3 +210,72 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     }
     state
 }
+
+// 画素値で threashold 以上切れていそうな部分を見つけ、優先的に配置
+pub fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
+    let select_value = |score_table: &Vec<f64>| -> Vec<usize> {
+        const RANGE_THREASHOLD: usize = 3;
+
+        let mut vs = vec![];
+        for i in 0..score_table.len() {
+            vs.push((score_table[i], i));
+        }
+        vs.sort_by_key(|v| (-v.0 * 1000.0) as i64);
+
+        let mut selected = vec![false; score_table.len()];
+
+        let mut ret = vec![];
+        for (_, i) in vs.into_iter() {
+            if !selected[i] && score_table[i] > threashold {
+                ret.push(i);
+
+                let si = if i <= RANGE_THREASHOLD { 0 } else { i - RANGE_THREASHOLD };
+                let ei = (i + RANGE_THREASHOLD).min(score_table.len());
+                for j in si..ei {
+                    selected[j] = true;
+                }
+            }
+        }
+        ret.sort();
+
+        ret
+    };
+
+    // 自分のマスの右で切るコストを管理
+    let mut row_score_table = vec![0f64; image.height + 1];
+    row_score_table[0] = 1e10;
+    row_score_table[image.height] = 1e10;
+
+    for y in 1..image.height - 1 {
+        for x in 0..image.width {
+            let c1 = image.color_of(y, x).to64();
+            let c2 = image.color_of(y + 1, x).to64();
+            row_score_table[y] = row_score_table[y].max((c1 - c2).abs().horizontal_max());
+        }
+    }
+
+    // 自分のマスの上で切るコストを管理
+    let mut col_score_table = vec![0f64; image.width + 1];
+    col_score_table[0] = 1e10;
+    col_score_table[image.width] = 1e10;
+
+    for x in 1..image.width - 1 {
+        for y in 0..image.height {
+            let c1 = image.color_of(y, x).to64();
+            let c2 = image.color_of(y, x + 1).to64();
+            col_score_table[x] = col_score_table[x].max((c1 - c2).abs().horizontal_max());
+        }
+    }
+
+    (select_value(&row_score_table), select_value(&col_score_table))
+}
+
+pub fn calculate_divisor_list(value: usize) -> Vec<usize> {
+    let mut ret = vec![];
+    for i in (2..value).rev() {
+        if value % i == 0 {
+            ret.push(i);
+        }
+    }
+    ret
+}

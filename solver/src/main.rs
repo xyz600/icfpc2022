@@ -4,6 +4,7 @@ mod solver1;
 mod solver2;
 mod solver3;
 mod solver4;
+mod solver5;
 
 use clap::{App, Arg};
 use common::problem::Image;
@@ -16,7 +17,7 @@ fn main() {
         .arg(Arg::with_name("problem-id").help("input problem id").short('i').long("problem-id").required(true).takes_value(true))
         .arg(
             Arg::with_name("solver-type")
-                .help("select solver type to use. set 1 | 2 | 3 | 4 (solver 3 | 4 is only available when use-twin-image is on.)")
+                .help("select solver type to use. set 1 | 2 | 3 | 4 | 5 (solver 3 | 4 | 5 is only available when use-twin-image is on.)")
                 .short('s')
                 .long("solver-type")
                 .required(true)
@@ -45,6 +46,8 @@ fn main() {
             solver3::solve(problem_id, &image)
         } else if solver_type == "4" {
             solver4::solve(problem_id, &image)
+        } else if solver_type == "5" {
+            solver5::solve(problem_id, &image)
         } else {
             panic!("unknown solver");
         }
