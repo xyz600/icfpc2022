@@ -2,14 +2,22 @@
 
 set -eu
 
-MAX_ID=35
+SINGLE_MAX_ID=25
+TWIN_MAX_ID=35
 
 cargo build --release --bin solver
 cp target/release/solver ./solver_bin
 
-parallel --progress --result result ./solver_bin -i {} ::: `seq 1 ${MAX_ID}`
+# single experiment
+# parallel --progress --result result ./solver_bin -i {} -s 2 ::: `seq 1 ${SINGLE_MAX_ID}`
+# for i in `seq 1 ${MAX_ID}`; do
+#     cp result/1/${i}/stdout solution/${i}.txt
+# done
 
-for i in `seq 1 ${MAX_ID}`; do
+# twin experiment
+TWIN_START_ID=`expr ${SINGLE_MAX_ID} + 1`
+parallel --progress --result result ./solver_bin -i {} -s 3 -t ::: `seq ${TWIN_START_ID} ${TWIN_MAX_ID}`
+for i in `seq ${TWIN_START_ID} ${TWIN_MAX_ID}`; do
     cp result/1/${i}/stdout solution/${i}.txt
 done
 
