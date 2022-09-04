@@ -154,6 +154,8 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     let mut queue = VecDeque::new();
     queue.push_back((0, 0, row_list.len() - 1, column_list.len() - 1, 0));
 
+    let mut counter = 0;
+
     while let Some((y1, x1, y2, x2, block_index)) = queue.pop_front() {
         match restore_table[y1][x1][y2][x2].unwrap() {
             SimpleCommand::VerticalSplit(xi) => {
@@ -184,9 +186,15 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
                 queue.push_back((yi, x1, y2, xi, child_block_index + 3));
             }
             SimpleCommand::Color(color) => {
+                eprintln!("info: ");
+                eprintln!("    {:?}", state.block_list[block_index].rect,);
+                eprintln!("    mean color = {:?}", color);
                 state.apply(Command::Color(block_index, color));
             }
         }
+        let filepath = format!("intermediate_{:03}.png", counter);
+        state.save_image(&filepath);
+        counter += 1;
     }
 
     state
