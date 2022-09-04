@@ -897,9 +897,6 @@ impl State {
                     println!("cut [{}] [{}, {}]", block_id, pos.x, pos.y);
                 }
                 CommandWithLog::Color(block_index, _, color) => {
-                    if !self.block_list[block_index].is_child {
-                        continue;
-                    }
                     let block_id = restore_id_sequence(block_index);
                     println!("color [{}] [{}, {}, {}, {}] ", block_id, color.r, color.g, color.b, color.a);
                 }
@@ -1012,12 +1009,6 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
 
     let mut command_cost = 0;
     for cmd in state.command_list.iter() {
-        if let CommandWithLog::Color(block_index, _, _) = cmd {
-            // is_child でなければ色を塗る必要がない
-            if !state.block_list[*block_index].is_child {
-                continue;
-            }
-        }
         let base_cost = cmd.base_cost();
         let block_index = cmd.block_index();
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
