@@ -777,12 +777,16 @@ impl State {
         let vertical_adjusted = rect1.left() == rect2.left() && rect1.right() == rect2.right();
         let horizontal_adjustted = rect1.top() == rect2.top() && rect1.bottom() == rect2.bottom();
 
-        let rect1_bottom_connectable = rect1.bottom() == rect2.top() && vertical_adjusted;
-        let rect1_top_connectable = rect1.top() == rect2.bottom() && vertical_adjusted;
-        let rect1_left_connectable = rect1.left() == rect2.right() && horizontal_adjustted;
-        let rect1_right_connectable = rect1.right() == rect2.left() && horizontal_adjustted;
+        let rect1_bottom_connectable = rect1.bottom() == rect2.top() + 1 && vertical_adjusted;
+        let rect1_top_connectable = rect1.top() + 1 == rect2.bottom() && vertical_adjusted;
+        let rect1_left_connectable = rect1.left() == rect2.right() + 1 && horizontal_adjustted;
+        let rect1_right_connectable = rect1.right() + 1 == rect2.left() && horizontal_adjustted;
 
         assert!(rect1_bottom_connectable || rect1_top_connectable || rect1_left_connectable || rect1_right_connectable);
+
+        self.block_list[block_index1].is_child = false;
+        self.block_list[block_index2].is_child = false;
+
         let dir = if rect1_bottom_connectable {
             Direction::Down
         } else if rect1_top_connectable {
