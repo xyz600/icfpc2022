@@ -616,7 +616,7 @@ impl CommandWithLog {
             CommandWithLog::HorizontalSplit(block_index, y) => Command::HorizontalSplit(block_index, y),
             CommandWithLog::VerticalSplit(block_index, x) => Command::VerticalSplit(block_index, x),
             CommandWithLog::PointSplit(block_index, pos) => Command::PointSplit(block_index, pos),
-            CommandWithLog::Color(block_index, prev_color, color) => Command::Color(block_index, color),
+            CommandWithLog::Color(block_index, _, color) => Command::Color(block_index, color),
             CommandWithLog::Swap(block_index1, block_index2) => Command::Swap(block_index1, block_index2),
             CommandWithLog::Merge(block_index1, block_index2) => Command::Merge(block_index1, block_index2),
         }
