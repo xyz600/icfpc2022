@@ -49,7 +49,7 @@ fn detect_corner(image: &Image, threashold: f64) -> Vec<Pos> {
     ret
 }
 
-pub fn solve(image: &Image) -> State {
+pub fn solve(problem_id: usize, image: &Image) -> State {
     let cum = CumulativeRMSESum::new(image);
 
     let init_state = State::new(image.height, image.width);
@@ -85,8 +85,7 @@ pub fn solve(image: &Image) -> State {
                 for y in row_edge_list.iter() {
                     let y = *y;
                     if rect.bottom() < y && y < rect.top() {
-                        let after_rmse =
-                            cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1) + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
+                        let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1) + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
                         let gain = before_rmse - after_rmse.horizontal_add();
                         if 0.0 < gain {
                             diff_list.push((gain, state_index, Command::HorizontalSplit(block_index, y)));
@@ -98,8 +97,7 @@ pub fn solve(image: &Image) -> State {
                 for x in coloumn_edge_list.iter() {
                     let x = *x;
                     if rect.left() < x && x < rect.right() {
-                        let after_rmse =
-                            cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x) + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
+                        let after_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x) + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
                         let gain = before_rmse - after_rmse.horizontal_add();
                         if 0.0 < gain {
                             diff_list.push((gain, state_index, Command::VerticalSplit(block_index, x)));
