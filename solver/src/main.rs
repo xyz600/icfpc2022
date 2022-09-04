@@ -8,6 +8,8 @@ mod solver5;
 mod solver6;
 mod solver7;
 
+use std::path::Path;
+
 use clap::{App, Arg};
 use common::problem::Image;
 
@@ -68,5 +70,5 @@ fn main() {
         }
     };
     final_state.save_image(&format!("solution/img/{problem_id}.png"));
-    final_state.print_output();
+    final_state.print_output(Path::new(&format!("solution/{problem_id}.txt",)));
 }

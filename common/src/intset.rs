@@ -18,6 +18,9 @@ impl IntSet {
     }
 
     pub fn add(&mut self, v: usize) {
+        if self.index_of[v] != INVALID {
+            return;
+        }
         self.buffer[self.size] = v;
         self.index_of[v] = self.size;
         self.size += 1;

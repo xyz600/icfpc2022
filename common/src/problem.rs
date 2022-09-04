@@ -8,7 +8,7 @@ pub const ALPHA: f64 = 0.005;
 use png::ColorType;
 use std::{
     fs::File,
-    io::BufWriter,
+    io::{BufWriter, Write},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
     path::Path,
 };
@@ -866,7 +866,7 @@ impl State {
         writer.write_image_data(&raw_data).unwrap();
     }
 
-    pub fn print_output(&self) {
+    pub fn print_output(&self, filepath: &Path) {
         let restore_id_sequence = |block_index: usize| -> String {
             let mut id_list = vec![];
             let mut index = block_index;
@@ -882,33 +882,36 @@ impl State {
             id_list.into_iter().map(|v: usize| v.to_string()).collect::<Vec<_>>().join(".")
         };
 
+        let file = File::create(filepath).unwrap();
+        let mut writer = BufWriter::new(file);
+
         for cmd in self.command_list.iter() {
             match *cmd {
                 CommandWithLog::HorizontalSplit(block_index, y) => {
                     let block_id = restore_id_sequence(block_index);
-                    println!("cut [{}] [y] [{}]", block_id, y);
+                    writeln!(&mut writer, "cut [{}] [y] [{}]", block_id, y).unwrap();
                 }
                 CommandWithLog::VerticalSplit(block_index, x) => {
                     let block_id = restore_id_sequence(block_index);
-                    println!("cut [{}] [x] [{}]", block_id, x);
+                    writeln!(&mut writer, "cut [{}] [x] [{}]", block_id, x).unwrap();
                 }
                 CommandWithLog::PointSplit(block_index, pos) => {
                     let block_id = restore_id_sequence(block_index);
-                    println!("cut [{}] [{}, {}]", block_id, pos.x, pos.y);
+                    writeln!(&mut writer, "cut [{}] [{}, {}]", block_id, pos.x, pos.y).unwrap();
                 }
                 CommandWithLog::Color(block_index, _, color) => {
                     let block_id = restore_id_sequence(block_index);
-                    println!("color [{}] [{}, {}, {}, {}] ", block_id, color.r, color.g, color.b, color.a);
+                    writeln!(&mut writer, "color [{}] [{}, {}, {}, {}] ", block_id, color.r, color.g, color.b, color.a).unwrap();
                 }
                 CommandWithLog::Swap(block_index1, block_index2) => {
                     let block_id1 = restore_id_sequence(block_index1);
                     let block_id2 = restore_id_sequence(block_index2);
-                    println!("swap [{}] [{}]", block_id1, block_id2);
+                    writeln!(&mut writer, "swap [{}] [{}]", block_id1, block_id2).unwrap();
                 }
                 CommandWithLog::Merge(block_index1, block_index2) => {
                     let block_id1 = restore_id_sequence(block_index1);
                     let block_id2 = restore_id_sequence(block_index2);
-                    println!("merge [{}] [{}]", block_id1, block_id2);
+                    writeln!(&mut writer, "merge [{}] [{}]", block_id1, block_id2).unwrap();
                 }
             }
         }
