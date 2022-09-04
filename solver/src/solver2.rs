@@ -125,7 +125,7 @@ fn solve_inner(image: &Image, row_list: &Vec<usize>, column_list: &Vec<usize>) -
                 inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, xi);
                 inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, yi, xi, y2, x2);
 
-                let point_cost = dp[y1][x1][yi][x1] + dp[y1][xi][yi][x2] + dp[yi][x1][y2][xi] + dp[yi][xi][y2][x2] + calculate_point_cut_cost(y1, x1, y2, x2);
+                let point_cost = dp[y1][x1][yi][xi] + dp[y1][xi][yi][x2] + dp[yi][x1][y2][xi] + dp[yi][xi][y2][x2] + calculate_point_cut_cost(y1, x1, y2, x2);
                 if dp[y1][x1][y2][x2] > point_cost {
                     dp[y1][x1][y2][x2] = point_cost;
                     restore_table[y1][x1][y2][x2] = Some(SimpleCommand::PointSplit(yi, xi));
@@ -182,7 +182,7 @@ fn solve_inner(image: &Image, row_list: &Vec<usize>, column_list: &Vec<usize>) -
                 queue.push_back((y1, x1, yi, xi, child_block_index));
                 queue.push_back((y1, xi, yi, x2, child_block_index + 1));
                 queue.push_back((yi, xi, y2, x2, child_block_index + 2));
-                queue.push_back((yi, x1, y2, xi, child_block_index + 2));
+                queue.push_back((yi, x1, y2, xi, child_block_index + 3));
             }
             SimpleCommand::Color(color) => {
                 state.apply(Command::Color(block_index, color));
