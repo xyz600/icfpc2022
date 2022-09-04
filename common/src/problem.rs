@@ -1,3 +1,10 @@
+pub const LINE_CUT_COST: f64 = 7.0;
+pub const POINT_CUT_COST: f64 = 10.0;
+pub const COLOR_COST: f64 = 5.0;
+pub const SWAP_COST: f64 = 3.0;
+pub const MERGE_COST: f64 = 1.0;
+pub const ALPHA: f64 = 0.005;
+
 use png::ColorType;
 use std::{
     fs::File,
@@ -219,16 +226,15 @@ impl Color64 {
     pub fn horizontal_add(&self) -> f64 {
         self.r + self.g + self.b + self.a
     }
+
+    pub fn horizontal_max(&self) -> f64 {
+        self.r.max(self.g).max(self.b).max(self.a)
+    }
 }
 
 impl Default for Color64 {
     fn default() -> Self {
-        Self {
-            r: 0f64,
-            g: 0f64,
-            b: 0f64,
-            a: 0f64,
-        }
+        Self { r: 0f64, g: 0f64, b: 0f64, a: 0f64 }
     }
 }
 
@@ -254,12 +260,7 @@ impl Eq for Color8 {}
 impl Default for Color<u8> {
     // FIXME: Color64 と異なって不自然なので直す
     fn default() -> Self {
-        Self {
-            r: 255,
-            g: 255,
-            b: 255,
-            a: 255,
-        }
+        Self { r: 255, g: 255, b: 255, a: 255 }
     }
 }
 
@@ -294,11 +295,7 @@ impl Image {
                 buffer[dst_i] = Color::new(r, g, b, a);
             }
         }
-        Image {
-            height,
-            width,
-            buffer,
-        }
+        Image { height, width, buffer }
     }
 
     pub fn size(&self) -> usize {
@@ -384,10 +381,7 @@ impl Rectangle {
 
     /// 辺上に存在するのは ok
     pub fn contains(&self, pos: &Pos) -> bool {
-        self.left() <= pos.x
-            && pos.x <= self.right()
-            && self.bottom() <= pos.y
-            && pos.y <= self.top()
+        self.left() <= pos.x && pos.x <= self.right() && self.bottom() <= pos.y && pos.y <= self.top()
     }
 
     /// 辺上にも存在しない
@@ -614,24 +608,20 @@ impl State {
         match cmd {
             Command::HorizontalSplit(block_index, y) => {
                 self.horizontal_split(block_index, y);
-                self.command_list
-                    .push(CommandWithLog::HorizontalSplit(block_index, y));
+                self.command_list.push(CommandWithLog::HorizontalSplit(block_index, y));
             }
             Command::VerticalSplit(block_index, x) => {
                 self.vertical_split(block_index, x);
-                self.command_list
-                    .push(CommandWithLog::VerticalSplit(block_index, x));
+                self.command_list.push(CommandWithLog::VerticalSplit(block_index, x));
             }
             Command::PointSplit(block_index, pos) => {
                 self.point_cut(block_index, &pos);
-                self.command_list
-                    .push(CommandWithLog::PointSplit(block_index, pos))
+                self.command_list.push(CommandWithLog::PointSplit(block_index, pos))
             }
             Command::Color(block_index, color) => {
                 let prev_color = self.block_list[block_index].color;
                 self.color(block_index, &prev_color, &color);
-                self.command_list
-                    .push(CommandWithLog::Color(block_index, prev_color, color));
+                self.command_list.push(CommandWithLog::Color(block_index, prev_color, color));
             }
         }
     }
@@ -639,8 +629,7 @@ impl State {
     pub fn undo(&mut self) {
         assert!(!self.command_list.is_empty());
         match *self.command_list.last().unwrap() {
-            CommandWithLog::HorizontalSplit(block_index, _)
-            | CommandWithLog::VerticalSplit(block_index, _) => {
+            CommandWithLog::HorizontalSplit(block_index, _) | CommandWithLog::VerticalSplit(block_index, _) => {
                 for _ in 0..2 {
                     assert!(self.block_list.last().unwrap().parent.unwrap() == block_index);
                     self.block_list.pop();
@@ -749,11 +738,7 @@ impl State {
                 }
             }
             id_list.reverse();
-            id_list
-                .into_iter()
-                .map(|v: usize| v.to_string())
-                .collect::<Vec<_>>()
-                .join(".")
+            id_list.into_iter().map(|v: usize| v.to_string()).collect::<Vec<_>>().join(".")
         };
 
         for cmd in self.command_list.iter() {
@@ -775,10 +760,7 @@ impl State {
                         continue;
                     }
                     let block_id = restore_id_sequence(block_index);
-                    println!(
-                        "color [{}] [{}, {}, {}, {}] ",
-                        block_id, color.r, color.g, color.b, color.a
-                    );
+                    println!("color [{}] [{}, {}, {}, {}] ", block_id, color.r, color.g, color.b, color.a);
                 }
             }
         }
@@ -890,7 +872,8 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
     pixel_cost = (pixel_cost * ALPHA).round();
-    const ALPHA: f64 = 0.005;
+
+    eprintln!("cost: (pixel, command) = ({}, {})", pixel_cost, command_cost);
 
     pixel_cost + command_cost as f64
 }
