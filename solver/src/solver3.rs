@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use common::{cumulative_sum::RangeColorMedianCalculator, problem::*};
+use std::path::Path;
 
 pub fn solve(problem_id: usize, image: &Image) -> State {
     let str_path = format!("dataset/{}.initial.json", problem_id);
@@ -27,5 +26,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             }
         }
     }
+
     state
 }

@@ -446,7 +446,7 @@ pub struct Block {
     // 自分が操作の末端か
     pub is_child: bool,
     // 管理用配列の index
-    index_of: usize,
+    pub index_of: usize,
 }
 
 impl Block {
