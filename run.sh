@@ -9,7 +9,7 @@ cargo build --release --bin solver
 cp target/release/solver ./solver_bin
 
 # single experiment
-dataset= `seq 1 $SINGLE_MAX_ID` `seq 36 40`
+dataset="`seq 1 $SINGLE_MAX_ID` `seq 36 40`"
 echo $dataset
 parallel --progress --result result ./solver_bin -i {} -s 6 ::: $dataset
 for i in $dataset ; do
