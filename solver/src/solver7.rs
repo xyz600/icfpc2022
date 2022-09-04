@@ -5,12 +5,16 @@ use crate::common_solver::{calculate_divisor_list, detect_edge};
 pub fn solve(problem_id: usize, image: &Image) -> State {
     let median_calculator = RangeColorMedianCalculator::new(image);
 
-    let (row_list, column_list) = detect_edge(image, 30.0);
+    let (row_list, mut column_list) = detect_edge(image, 30.0);
+
+    // 数え間違えて微妙に swap できない…
+    column_list[1] += 1;
+    column_list[3] += 1;
+    let column_list = column_list;
 
     let mut state = State::new(image.height, image.width);
 
     let blue_color = median_calculator.median(row_list[0], column_list[0], row_list[1], column_list[10]);
-    let white_color = median_calculator.median(row_list[9], column_list[0], row_list[10], column_list[1]);
     let black_color = median_calculator.median(row_list[9], column_list[1], row_list[10], column_list[2]);
 
     state.apply(Command::HorizontalSplit(0, row_list[1]));
@@ -43,16 +47,13 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             dual_block_index_table[yi][1] = state.block_list.len() - 1;
         }
     }
-    eprintln!("{:?}", dual_block_index_table);
-
-    return state;
-
     let mut single_column_block_index_table = vec![0; 10];
+
     // 左列 merge
     {
         let mut merge_target_block_id = dual_block_index_table[1][0];
         for yi in 2..10 {
-            state.apply(Command::Merge(merge_target_block_id, dual_block_index_table[yi - 1][0]));
+            state.apply(Command::Merge(merge_target_block_id, dual_block_index_table[yi][0]));
             merge_target_block_id = state.block_list.len() - 1;
         }
 
@@ -62,10 +63,8 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             target_block_id = state.block_list.len() - 1;
             single_column_block_index_table[xi - 1] = state.block_list.len() - 2;
         }
-        single_column_block_index_table[4] = state.block_list.len() - 1;
+        single_column_block_index_table[3] = state.block_list.len() - 1;
     }
-
-    return state;
 
     // 右列 merge
     {
@@ -78,15 +77,16 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
 
         // 1マスだけ青で塗る
         state.apply(Command::VerticalSplit(dual_block_index_table[1][1], column_list[8]));
-        let small_block_index = state.block_list.len() - 1;
+
         let lower_left_block_index = state.block_list.len() - 2;
+        let small_block_index = state.block_list.len() - 1;
         state.apply(Command::Color(small_block_index, blue_color));
 
-        // 一番右を切って、下を merge
+        // 一番右を残して縦切断した後、一番下をくっつける
         state.apply(Command::VerticalSplit(right_all_block_id, column_list[8]));
+        let right_all_block_id = state.block_list.len() - 2;
 
-        let rest_block_index = state.block_list.len() - 1;
-        state.apply(Command::Merge(rest_block_index, lower_left_block_index));
+        state.apply(Command::Merge(right_all_block_id, lower_left_block_index));
 
         // 縦切断
         let mut target_block_id = state.block_list.len() - 1;
@@ -96,7 +96,7 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             // 縦列の位置をメモ
             single_column_block_index_table[xi - 1] = state.block_list.len() - 2;
         }
-        single_column_block_index_table[8] = state.block_list.len() - 1;
+        single_column_block_index_table[7] = state.block_list.len() - 1;
     }
 
     state.apply(Command::Swap(single_column_block_index_table[0], single_column_block_index_table[5]));
