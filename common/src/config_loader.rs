@@ -27,7 +27,7 @@ pub struct BlockConfig {
 pub struct TwinImageConfig {
     pub width: usize,
     pub height: usize,
-    blocks: Vec<BlockConfig>,
+    pub blocks: Vec<BlockConfig>,
 }
 
 impl TwinImageConfig {

@@ -13,6 +13,8 @@ use std::{
     path::Path,
 };
 
+use crate::config_loader;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Color<T> {
     pub r: T,
@@ -522,6 +524,8 @@ pub enum Command {
     PointSplit(usize, Pos),
     // block_idx, prev_color, color
     Color(usize, Color8),
+    // block_idx, block_idx
+    Swap(usize, usize),
 }
 
 impl Command {
@@ -531,6 +535,7 @@ impl Command {
             Command::VerticalSplit(_, _) => 7,
             Command::PointSplit(_, _) => 10,
             Command::Color(_, _) => 5,
+            Command::Swap(_, _) => 3,
         }
     }
 
@@ -540,6 +545,8 @@ impl Command {
             Command::VerticalSplit(block_index, _) => block_index,
             Command::PointSplit(block_index, _) => block_index,
             Command::Color(block_index, _) => block_index,
+            // FIXME: block_index 意味ない！！
+            Command::Swap(block_index, _) => block_index,
         }
     }
 }
@@ -554,6 +561,8 @@ enum CommandWithLog {
     PointSplit(usize, Pos),
     // block_idx, prev_color, color
     Color(usize, Color8, Color8),
+    // block_idx, block_idx
+    Swap(usize, usize),
 }
 
 impl CommandWithLog {
@@ -563,6 +572,7 @@ impl CommandWithLog {
             CommandWithLog::VerticalSplit(_, _) => 7,
             CommandWithLog::PointSplit(_, _) => 10,
             CommandWithLog::Color(_, _, _) => 5,
+            CommandWithLog::Swap(_, _) => 3,
         }
     }
 
@@ -572,6 +582,7 @@ impl CommandWithLog {
             CommandWithLog::VerticalSplit(block_index, _) => block_index,
             CommandWithLog::PointSplit(block_index, _) => block_index,
             CommandWithLog::Color(block_index, _, _) => block_index,
+            CommandWithLog::Swap(block_index, _) => block_index,
         }
     }
 }
@@ -604,6 +615,25 @@ impl State {
         }
     }
 
+    pub fn create_with_config(config: &config_loader::TwinImageConfig) -> State {
+        let mut state = State::new(config.height, config.width);
+
+        for block_config in config.blocks.iter() {
+            state.block_list.push(Block {
+                rect: block_config.rect,
+                color: block_config.color,
+                parent: None,
+                id: block_config.id,
+                is_child: true,
+                index_of: state.block_list.len(),
+            });
+            state.max_block_id = state.max_block_id.max(block_config.id);
+        }
+        state.max_block_id += 1;
+
+        state
+    }
+
     pub fn apply(&mut self, cmd: Command) {
         match cmd {
             Command::HorizontalSplit(block_index, y) => {
@@ -623,7 +653,16 @@ impl State {
                 self.color(block_index, &prev_color, &color);
                 self.command_list.push(CommandWithLog::Color(block_index, prev_color, color));
             }
+            Command::Swap(block_index1, block_index2) => {
+                self.swap(block_index1, block_index2);
+                self.command_list.push(CommandWithLog::Swap(block_index1, block_index2));
+            }
         }
+    }
+
+    fn swap(&mut self, block_index1: usize, block_index2: usize) {
+        assert_eq!(self.block_list[block_index1].rect.height, self.block_list[block_index2].rect.height);
+        assert_eq!(self.block_list[block_index1].rect.width, self.block_list[block_index2].rect.width);
     }
 
     pub fn undo(&mut self) {
@@ -648,6 +687,9 @@ impl State {
             CommandWithLog::Color(block_index, prev_color, _) => {
                 assert!(self.block_list[block_index].is_child);
                 self.block_list[block_index].color = prev_color;
+            }
+            CommandWithLog::Swap(_, _) => {
+                unimplemented!();
             }
         }
         self.command_list.pop();
@@ -761,6 +803,11 @@ impl State {
                     }
                     let block_id = restore_id_sequence(block_index);
                     println!("color [{}] [{}, {}, {}, {}] ", block_id, color.r, color.g, color.b, color.a);
+                }
+                CommandWithLog::Swap(block_index1, block_index2) => {
+                    let block_id1 = restore_id_sequence(block_index1);
+                    let block_id2 = restore_id_sequence(block_index2);
+                    println!("swap [{}] [{}]", block_id1, block_id2);
                 }
             }
         }
