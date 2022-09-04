@@ -4,7 +4,7 @@ import requests
 import json 
 from io import StringIO
 
-API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inh5ejYwMDYwMEBnbWFpbC5jb20iLCJleHAiOjE2NjIyMDY0MTYsIm9yaWdfaWF0IjoxNjYyMTIwMDE2fQ.qnTW6qeneQTkuHE2x1E5c0vbcJ_5TWACrcIvklBYE6Y"
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inh5ejYwMDYwMEBnbWFpbC5jb20iLCJleHAiOjE2NjIyODU3MzIsIm9yaWdfaWF0IjoxNjYyMTk5MzMyfQ.UHvrLzfaAugMSrEEYJqlIhwsiM_IRIFXkaZdUB3b9F8"
 
 class ICFPCClient:
 
@@ -41,6 +41,9 @@ class ICFPCClient:
 if __name__ == "__main__":
 
     client = ICFPCClient(API_KEY)
-    for id in range(1, 25):
+
+    submission_id_list = list(range(1, 36))
+
+    for id in submission_id_list:
         client.submit(id)
         print(f"submit {id}")

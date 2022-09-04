@@ -2,7 +2,7 @@
 
 set -eu
 
-MAX_ID=25
+MAX_ID=35
 
 cargo build --release --bin solver
 cp target/release/solver ./solver_bin
