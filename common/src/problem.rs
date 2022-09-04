@@ -610,6 +610,17 @@ impl CommandWithLog {
             CommandWithLog::Merge(block_index, _) => block_index,
         }
     }
+
+    pub fn to_command(&self) -> Command {
+        match *self {
+            CommandWithLog::HorizontalSplit(block_index, y) => Command::HorizontalSplit(block_index, y),
+            CommandWithLog::VerticalSplit(block_index, x) => Command::VerticalSplit(block_index, x),
+            CommandWithLog::PointSplit(block_index, pos) => Command::PointSplit(block_index, pos),
+            CommandWithLog::Color(block_index, prev_color, color) => Command::Color(block_index, color),
+            CommandWithLog::Swap(block_index1, block_index2) => Command::Swap(block_index1, block_index2),
+            CommandWithLog::Merge(block_index1, block_index2) => Command::Merge(block_index1, block_index2),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -638,6 +649,10 @@ impl State {
             command_list: vec![],
             next_block_id: 1,
         }
+    }
+
+    pub fn get_command_list(&self) -> Vec<Command> {
+        self.command_list.iter().map(|cmd| cmd.to_command()).collect()
     }
 
     pub fn create_with_config(config: &config_loader::TwinImageConfig) -> State {
