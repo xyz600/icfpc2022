@@ -78,9 +78,7 @@ pub fn solve(image: &Image) -> State {
                     continue;
                 }
                 let rect = state.block_list[block_index].rect;
-                let before_rmse = cum
-                    .range_rmse(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1)
-                    .horizontal_add();
+                let before_rmse = cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, rect.right() + 1).horizontal_add();
                 // 貪欲法
                 // 以下の選択肢で一番良さそうなものを選択
                 // 1. 横線1本 + 2色
@@ -88,15 +86,10 @@ pub fn solve(image: &Image) -> State {
                     let y = *y;
                     if rect.bottom() < y && y < rect.top() {
                         let after_rmse =
-                            cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1)
-                                + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
+                            cum.range_rmse(rect.bottom(), rect.left(), y, rect.right() + 1) + cum.range_rmse(y, rect.left(), rect.top() + 1, rect.right() + 1);
                         let gain = before_rmse - after_rmse.horizontal_add();
                         if 0.0 < gain {
-                            diff_list.push((
-                                gain,
-                                state_index,
-                                Command::HorizontalSplit(block_index, y),
-                            ));
+                            diff_list.push((gain, state_index, Command::HorizontalSplit(block_index, y)));
                         }
                     }
                 }
@@ -106,20 +99,10 @@ pub fn solve(image: &Image) -> State {
                     let x = *x;
                     if rect.left() < x && x < rect.right() {
                         let after_rmse =
-                            cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x)
-                                + cum.range_rmse(
-                                    rect.bottom(),
-                                    x,
-                                    rect.top() + 1,
-                                    rect.right() + 1,
-                                );
+                            cum.range_rmse(rect.bottom(), rect.left(), rect.top() + 1, x) + cum.range_rmse(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
                         let gain = before_rmse - after_rmse.horizontal_add();
                         if 0.0 < gain {
-                            diff_list.push((
-                                gain,
-                                state_index,
-                                Command::VerticalSplit(block_index, x),
-                            ));
+                            diff_list.push((gain, state_index, Command::VerticalSplit(block_index, x)));
                         }
                     }
                 }
@@ -136,11 +119,7 @@ pub fn solve(image: &Image) -> State {
                         + cum.range_rmse(p.y, rect.left(), rect.top(), p.x);
                     let gain = before_rmse - after_rmse.horizontal_add();
                     if 0.0 < gain {
-                        diff_list.push((
-                            gain,
-                            state_index,
-                            Command::PointSplit(block_index, Pos::new(p.y, p.x)),
-                        ));
+                        diff_list.push((gain, state_index, Command::PointSplit(block_index, Pos::new(p.y, p.x))));
                     }
                 }
             }
@@ -177,18 +156,15 @@ pub fn solve(image: &Image) -> State {
             match command {
                 Command::HorizontalSplit(_, y) => {
                     let new_block_index = state.block_list.len() - 2;
-                    let bottom_color =
-                        cum.mean_color(rect.bottom(), rect.left(), y, rect.right() + 1);
-                    let top_color =
-                        cum.mean_color(y, rect.left(), rect.top() + 1, rect.right() + 1);
+                    let bottom_color = cum.mean_color(rect.bottom(), rect.left(), y, rect.right() + 1);
+                    let top_color = cum.mean_color(y, rect.left(), rect.top() + 1, rect.right() + 1);
                     state.apply(Command::Color(new_block_index, bottom_color));
                     state.apply(Command::Color(new_block_index + 1, top_color));
                 }
                 Command::VerticalSplit(_, x) => {
                     let new_block_index = state.block_list.len() - 2;
                     let left_color = cum.mean_color(rect.bottom(), rect.left(), rect.top() + 1, x);
-                    let right_color =
-                        cum.mean_color(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
+                    let right_color = cum.mean_color(rect.bottom(), x, rect.top() + 1, rect.right() + 1);
                     state.apply(Command::Color(new_block_index, left_color));
                     state.apply(Command::Color(new_block_index + 1, right_color));
                 }
@@ -198,9 +174,7 @@ pub fn solve(image: &Image) -> State {
                     let br_color = cum.mean_color(rect.bottom(), pos.x, pos.y, rect.right() + 1);
                     let tr_color = cum.mean_color(pos.y, pos.x, rect.top() + 1, rect.right() + 1);
                     let tl_color = cum.mean_color(pos.y, rect.left(), rect.top() + 1, pos.x);
-                    for (index, color) in
-                        [bl_color, br_color, tr_color, tl_color].iter().enumerate()
-                    {
+                    for (index, color) in [bl_color, br_color, tr_color, tl_color].iter().enumerate() {
                         state.apply(Command::Color(new_block_index + index, *color));
                     }
                 }
