@@ -617,6 +617,7 @@ impl State {
 
     pub fn create_with_config(config: &config_loader::TwinImageConfig) -> State {
         let mut state = State::new(config.height, config.width);
+        state.block_list[0].is_child = false;
 
         for block_config in config.blocks.iter() {
             state.block_list.push(Block {
