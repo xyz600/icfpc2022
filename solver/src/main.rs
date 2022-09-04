@@ -1,9 +1,10 @@
 mod solver1;
+mod solver2;
 
 use clap::{App, Arg};
 use common::problem::Image;
 
-use solver1::solve;
+use solver2::solve;
 
 fn main() {
     let app = App::new("xyzsolver")
