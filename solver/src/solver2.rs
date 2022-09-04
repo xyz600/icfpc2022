@@ -3,7 +3,7 @@ use common::problem::*;
 
 fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
     let select_value = |score_table: &Vec<f64>| -> Vec<usize> {
-        const RANGE_THREASHOLD: usize = 5;
+        const RANGE_THREASHOLD: usize = 3;
 
         let mut vs = vec![];
         for i in 0..score_table.len() {
@@ -39,10 +39,8 @@ fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
         for x in 0..image.width {
             let c1 = image.color_of(y, x).to64();
             let c2 = image.color_of(y + 1, x).to64();
-            row_score_table[y] += (c1 - c2).abs().horizontal_max();
+            row_score_table[y] = row_score_table[y].max((c1 - c2).abs().horizontal_max());
         }
-        // 1画素あたり、最大どれくらいずれてる？という尺度に直す
-        row_score_table[y] /= image.width as f64;
     }
 
     // 自分のマスの上で切るコストを管理
@@ -54,9 +52,8 @@ fn detect_edge(image: &Image, threashold: f64) -> (Vec<usize>, Vec<usize>) {
         for y in 0..image.height {
             let c1 = image.color_of(y, x).to64();
             let c2 = image.color_of(y, x + 1).to64();
-            col_score_table[x] += (c1 - c2).abs().horizontal_max();
+            col_score_table[x] = col_score_table[x].max((c1 - c2).abs().horizontal_max());
         }
-        col_score_table[x] /= image.height as f64;
     }
 
     (select_value(&row_score_table), select_value(&col_score_table))
@@ -73,18 +70,10 @@ fn calculate_divisor_list(value: usize) -> Vec<usize> {
 }
 
 pub fn solve(problem_id: usize, image: &Image) -> State {
-    const POS_THREASHOLD: usize = 50;
+    const POS_THREASHOLD: usize = 25;
 
     let mut best_state = State::new(image.height, image.width);
-    let mut best_score = 1e10; // evaluate(image, &best_state);
-
-    let save_image = |state: &State, counter: &mut usize| {
-        let filepath = format!("intermediate_{}_{}.png", problem_id, counter);
-        state.save_image(&filepath);
-        *counter += 1;
-    };
-
-    let mut counter = 0;
+    let mut best_score = evaluate(image, &best_state);
 
     {
         // edge 検出して、パターン数が少なければやってみる
@@ -97,7 +86,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             let exact_score = evaluate(image, &state);
             eprintln!("update: {} -> {}", best_score, exact_score);
 
-            save_image(&state, &mut counter);
             if best_score > exact_score {
                 best_score = exact_score;
                 best_state = state;
@@ -107,7 +95,7 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
         }
     }
 
-    if false {
+    {
         let image_size = 400;
         let step_list = calculate_divisor_list(image_size);
         eprintln!("step_list: {:?}", step_list);
@@ -129,7 +117,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
 
             let state = solve_by_divisor(image, &row_list, &column_list);
             let exact_score = evaluate(image, &state);
-            save_image(&state, &mut counter);
             eprintln!("update: {} -> {}", best_score, exact_score);
             if best_score > exact_score {
                 best_score = exact_score;
@@ -137,6 +124,5 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             }
         }
     }
-
     best_state
 }

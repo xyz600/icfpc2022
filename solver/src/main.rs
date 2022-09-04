@@ -24,5 +24,6 @@ fn main() {
     let image = Image::new(input_filepath.as_str());
 
     let final_state = solve(problem_id, &image);
+    final_state.save_image(&format!("solution/img/{problem_id}.png"));
     final_state.print_output();
 }

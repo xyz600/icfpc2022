@@ -128,9 +128,7 @@ impl CumulativeRMSESum {
     // FIXME:
     pub fn mean_color(&self, sy: usize, sx: usize, ey: usize, ex: usize) -> Color8 {
         let size = (ey - sy) * (ex - sx);
-        (self.mean_sum.range_sum(sy, sx, ey, ex) / (size as f64))
-            .round()
-            .to8()
+        (self.mean_sum.range_sum(sy, sx, ey, ex) / (size as f64)).round().to8()
     }
 }
 
@@ -143,13 +141,7 @@ where
 
 impl<T> CumulativeSum<T>
 where
-    T: Add<T, Output = T>
-        + AddAssign<T>
-        + Sub<T, Output = T>
-        + SubAssign<T>
-        + Default
-        + Clone
-        + Copy,
+    T: Add<T, Output = T> + AddAssign<T> + Sub<T, Output = T> + SubAssign<T> + Default + Clone + Copy,
 {
     pub fn new(data: &Vec<Vec<T>>) -> CumulativeSum<T> {
         let height = data.len() + 1;
@@ -158,20 +150,15 @@ where
 
         for y in 0..height - 1 {
             for x in 0..width - 1 {
-                ret_data[y + 1][x + 1] =
-                    data[y][x] + ret_data[y][x + 1] + ret_data[y + 1][x] - ret_data[y][x];
+                ret_data[y + 1][x + 1] = data[y][x] + ret_data[y][x + 1] + ret_data[y + 1][x] - ret_data[y][x];
             }
         }
 
-        CumulativeSum {
-            cumulative_data: ret_data,
-        }
+        CumulativeSum { cumulative_data: ret_data }
     }
 
     pub fn range_sum(&self, sy: usize, sx: usize, ey: usize, ex: usize) -> T {
-        self.cumulative_data[ey][ex] + self.cumulative_data[sy][sx]
-            - self.cumulative_data[ey][sx]
-            - self.cumulative_data[sy][ex]
+        self.cumulative_data[ey][ex] + self.cumulative_data[sy][sx] - self.cumulative_data[ey][sx] - self.cumulative_data[sy][ex]
     }
 
     pub fn height(&self) -> usize {
@@ -200,6 +187,12 @@ mod tests {
         let cumulator = CumulativeSum::new(&data);
         let ret = cumulator.range_sum(1, 1, 3, 3);
         assert_eq!(ret, 12);
+
+        let ret = cumulator.range_sum(1, 1, 4, 4);
+        assert_eq!(ret, 36);
+
+        let ret = cumulator.range_sum(1, 2, 3, 4);
+        assert_eq!(ret, 16);
     }
 
     #[test]

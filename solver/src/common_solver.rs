@@ -1,4 +1,4 @@
-use common::cumulative_sum::CumulativeRMSESum;
+use common::cumulative_sum::RangeColorMedianCalculator;
 use common::problem::*;
 use std::collections::VecDeque;
 
@@ -39,10 +39,11 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     // 行動復元用のコマンド
     let mut restore_table = vec![vec![vec![vec![None; table_width]; table_height]; table_width]; table_height];
 
-    let rmse_calculator = CumulativeRMSESum::new(image);
+    let median_calculator = RangeColorMedianCalculator::new(image);
 
     fn inner(
-        rmse_calculator: &CumulativeRMSESum,
+        image: &Image,
+        median_calculator: &RangeColorMedianCalculator,
         height: usize,
         width: usize,
         dp: &mut Vec<Vec<Vec<Vec<f64>>>>,
@@ -57,19 +58,30 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
         assert!(y1 <= y2);
         assert!(x1 <= x2);
 
-        let calculate_block_size =
-            |y1: usize, x1: usize, y2: usize, x2: usize| -> usize { (row_list[y2] - row_list[y1]) * (column_list[x2] - column_list[x1]) };
+        let calculate_block_size = |y1: usize, x1: usize, y2: usize, x2: usize| -> usize { (row_list[y2] - row_list[y1]) * (column_list[x2] - column_list[x1]) };
 
         let calculate_color_cost = |y1: usize, x1: usize, y2: usize, x2: usize| -> (f64, Color8) {
             let sy = row_list[y1];
             let sx = column_list[x1];
             let ey = row_list[y2];
             let ex = column_list[x2];
+
             // 画素値が大体同じ値だと仮定すると、sqrt(n) で割る位がちょうどよさそう
-            let rmse_diff = rmse_calculator.range_rmse(sy, sx, ey, ex).horizontal_add() * ALPHA;
+            let color = median_calculator.median(sy, sx, ey, ex);
+            let color64 = color.to64();
+            let mut rmse_sum = 0.0;
+            for y in sy..ey {
+                for x in sx..ex {
+                    rmse_sum += (image.color_of(y, x).to64() - color64).square().horizontal_add().sqrt();
+                }
+            }
+
+            let canvas_size = height * width;
+            let block_size = calculate_block_size(y1, x1, y2, x2);
+            let command_cost = COLOR_COST * canvas_size as f64 / block_size as f64;
+
             // FIXME: 後で直した方がいいかも？
-            let color = rmse_calculator.mean_color(sy, sx, ey, ex);
-            (rmse_diff, color)
+            (rmse_sum * ALPHA + command_cost, color)
         };
 
         let calculate_line_cut_cost = |y1: usize, x1: usize, y2: usize, x2: usize| -> f64 {
@@ -98,8 +110,8 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
 
         // 横分割して再帰
         for yi in y1 + 1..y2 {
-            inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, x2);
-            inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, x2);
+            inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, x2);
+            inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, x2);
             let vert_cost = dp[y1][x1][yi][x2] + dp[yi][x1][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2);
             if dp[y1][x1][y2][x2] > vert_cost {
                 dp[y1][x1][y2][x2] = vert_cost;
@@ -109,8 +121,8 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
 
         // 縦分割して再帰
         for xi in x1 + 1..x2 {
-            inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, y2, xi);
-            inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, y2, x2);
+            inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, y2, xi);
+            inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, y2, x2);
             let hor_cost = dp[y1][x1][y2][xi] + dp[y1][xi][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2);
             if dp[y1][x1][y2][x2] > hor_cost {
                 dp[y1][x1][y2][x2] = hor_cost;
@@ -121,10 +133,10 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
         // 点分割して再帰
         for yi in y1 + 1..y2 {
             for xi in x1 + 1..x2 {
-                inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, xi);
-                inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, yi, x2);
-                inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, xi);
-                inner(rmse_calculator, height, width, dp, restore_table, row_list, column_list, yi, xi, y2, x2);
+                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, xi);
+                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, yi, x2);
+                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, xi);
+                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, xi, y2, x2);
 
                 let point_cost = dp[y1][x1][yi][xi] + dp[y1][xi][yi][x2] + dp[yi][x1][y2][xi] + dp[yi][xi][y2][x2] + calculate_point_cut_cost(y1, x1, y2, x2);
                 if dp[y1][x1][y2][x2] > point_cost {
@@ -136,7 +148,8 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     }
 
     inner(
-        &rmse_calculator,
+        image,
+        &median_calculator,
         image.height,
         image.width,
         &mut dp,
@@ -186,16 +199,14 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
                 queue.push_back((yi, x1, y2, xi, child_block_index + 3));
             }
             SimpleCommand::Color(color) => {
-                eprintln!("info: ");
-                eprintln!("    {:?}", state.block_list[block_index].rect,);
-                eprintln!("    mean color = {:?}", color);
                 state.apply(Command::Color(block_index, color));
             }
         }
-        let filepath = format!("intermediate_{:03}.png", counter);
-        state.save_image(&filepath);
-        counter += 1;
+        if false {
+            let filepath = format!("intermediate_{:03}.png", counter);
+            state.save_image(&filepath);
+            counter += 1;
+        }
     }
-
     state
 }

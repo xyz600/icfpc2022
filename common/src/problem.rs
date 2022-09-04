@@ -226,16 +226,15 @@ impl Color64 {
     pub fn horizontal_add(&self) -> f64 {
         self.r + self.g + self.b + self.a
     }
+
+    pub fn horizontal_max(&self) -> f64 {
+        self.r.max(self.g).max(self.b).max(self.a)
+    }
 }
 
 impl Default for Color64 {
     fn default() -> Self {
-        Self {
-            r: 0f64,
-            g: 0f64,
-            b: 0f64,
-            a: 0f64,
-        }
+        Self { r: 0f64, g: 0f64, b: 0f64, a: 0f64 }
     }
 }
 
@@ -261,12 +260,7 @@ impl Eq for Color8 {}
 impl Default for Color<u8> {
     // FIXME: Color64 と異なって不自然なので直す
     fn default() -> Self {
-        Self {
-            r: 255,
-            g: 255,
-            b: 255,
-            a: 255,
-        }
+        Self { r: 255, g: 255, b: 255, a: 255 }
     }
 }
 
@@ -878,6 +872,8 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
         command_cost += image.size() / state.block_list[block_index].rect.size() * base_cost;
     }
     pixel_cost = (pixel_cost * ALPHA).round();
+
+    eprintln!("cost: (pixel, command) = ({}, {})", pixel_cost, command_cost);
 
     pixel_cost + command_cost as f64
 }
