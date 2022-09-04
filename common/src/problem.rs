@@ -355,6 +355,13 @@ pub struct Rectangle {
     pub width: usize,
 }
 
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
 impl Rectangle {
     pub fn new(bottom: usize, left: usize, height: usize, width: usize) -> Rectangle {
         Rectangle {
@@ -392,7 +399,7 @@ impl Rectangle {
     }
 
     /// x is exclusive for left
-    pub fn vertical_split(&self, x: usize) -> (Rectangle, Rectangle) {
+    fn vertical_split(&self, x: usize) -> (Rectangle, Rectangle) {
         assert!(self.left() < x && x < self.right());
         let left = Rectangle::new(self.bottom(), self.left(), self.height, x - self.left());
         let right = Rectangle::new(self.bottom(), x, self.height, self.right() + 1 - x);
@@ -400,20 +407,30 @@ impl Rectangle {
     }
 
     /// y is explicit for top
-    pub fn horizontal_split(&self, y: usize) -> (Rectangle, Rectangle) {
+    fn horizontal_split(&self, y: usize) -> (Rectangle, Rectangle) {
         assert!(self.bottom() < y && y < self.top());
         let bottom = Rectangle::new(self.bottom(), self.left(), y - self.bottom(), self.width);
         let top = Rectangle::new(y, self.left(), self.top() + 1 - y, self.width);
         (bottom, top)
     }
 
-    pub fn point_split(&self, p: &Pos) -> (Rectangle, Rectangle, Rectangle, Rectangle) {
+    fn point_split(&self, p: &Pos) -> (Rectangle, Rectangle, Rectangle, Rectangle) {
         assert!(self.is_internal(p));
         let (left, right) = self.vertical_split(p.x);
         let (bottom_left, top_left) = left.horizontal_split(p.y);
         let (bottom_right, top_right) = right.horizontal_split(p.y);
 
         (bottom_left, bottom_right, top_right, top_left)
+    }
+
+    // dir: self から見てどの方向に接続するか
+    fn merge(&self, rect2: &Rectangle, dir: Direction) -> Rectangle {
+        match dir {
+            Direction::Up => Rectangle::new(self.bottom(), self.left(), self.height + rect2.height, self.width),
+            Direction::Right => Rectangle::new(self.bottom(), self.left(), self.height, self.width + rect2.width),
+            Direction::Down => Rectangle::new(rect2.bottom(), rect2.left(), self.height + rect2.height, self.width),
+            Direction::Left => Rectangle::new(rect2.bottom(), rect2.left(), self.height, self.width + rect2.width),
+        }
     }
 }
 
@@ -526,6 +543,8 @@ pub enum Command {
     Color(usize, Color8),
     // block_idx, block_idx
     Swap(usize, usize),
+    // block_idx, block_idx,
+    Merge(usize, usize),
 }
 
 impl Command {
@@ -536,6 +555,7 @@ impl Command {
             Command::PointSplit(_, _) => 10,
             Command::Color(_, _) => 5,
             Command::Swap(_, _) => 3,
+            Command::Merge(_, _) => 1,
         }
     }
 
@@ -547,6 +567,7 @@ impl Command {
             Command::Color(block_index, _) => block_index,
             // FIXME: block_index 意味ない！！
             Command::Swap(block_index, _) => block_index,
+            Command::Merge(block_index, _) => block_index,
         }
     }
 }
@@ -563,6 +584,8 @@ enum CommandWithLog {
     Color(usize, Color8, Color8),
     // block_idx, block_idx
     Swap(usize, usize),
+    // block_idx, block_idx
+    Merge(usize, usize),
 }
 
 impl CommandWithLog {
@@ -573,6 +596,7 @@ impl CommandWithLog {
             CommandWithLog::PointSplit(_, _) => 10,
             CommandWithLog::Color(_, _, _) => 5,
             CommandWithLog::Swap(_, _) => 3,
+            CommandWithLog::Merge(_, _) => 1,
         }
     }
 
@@ -583,6 +607,7 @@ impl CommandWithLog {
             CommandWithLog::PointSplit(block_index, _) => block_index,
             CommandWithLog::Color(block_index, _, _) => block_index,
             CommandWithLog::Swap(block_index, _) => block_index,
+            CommandWithLog::Merge(block_index, _) => block_index,
         }
     }
 }
@@ -590,7 +615,7 @@ impl CommandWithLog {
 #[derive(Clone, PartialEq, Debug)]
 pub struct State {
     pub block_list: Vec<Block>,
-    max_block_id: usize,
+    next_block_id: usize,
     command_list: Vec<CommandWithLog>,
 }
 
@@ -611,7 +636,7 @@ impl State {
         State {
             block_list: vec![init_block],
             command_list: vec![],
-            max_block_id: 0,
+            next_block_id: 1,
         }
     }
 
@@ -628,9 +653,9 @@ impl State {
                 is_child: true,
                 index_of: state.block_list.len(),
             });
-            state.max_block_id = state.max_block_id.max(block_config.id);
+            state.next_block_id = state.next_block_id.max(block_config.id);
         }
-        state.max_block_id += 1;
+        state.next_block_id += 1;
 
         state
     }
@@ -658,12 +683,11 @@ impl State {
                 self.swap(block_index1, block_index2);
                 self.command_list.push(CommandWithLog::Swap(block_index1, block_index2));
             }
+            Command::Merge(block_index1, block_index2) => {
+                self.merge(block_index1, block_index2);
+                self.command_list.push(CommandWithLog::Merge(block_index1, block_index2));
+            }
         }
-    }
-
-    fn swap(&mut self, block_index1: usize, block_index2: usize) {
-        assert_eq!(self.block_list[block_index1].rect.height, self.block_list[block_index2].rect.height);
-        assert_eq!(self.block_list[block_index1].rect.width, self.block_list[block_index2].rect.width);
     }
 
     pub fn undo(&mut self) {
@@ -690,6 +714,9 @@ impl State {
                 self.block_list[block_index].color = prev_color;
             }
             CommandWithLog::Swap(_, _) => {
+                unimplemented!();
+            }
+            CommandWithLog::Merge(_, _) => {
                 unimplemented!();
             }
         }
@@ -741,6 +768,58 @@ impl State {
         for block in [bl, br, ur, ul] {
             self.block_list.push(block);
         }
+    }
+
+    fn merge(&mut self, block_index1: usize, block_index2: usize) {
+        let rect1 = self.block_list[block_index1].rect;
+        let rect2 = self.block_list[block_index2].rect;
+
+        let vertical_adjusted = rect1.left() == rect2.left() && rect1.right() == rect2.right();
+        let horizontal_adjustted = rect1.top() == rect2.top() && rect1.bottom() == rect2.bottom();
+
+        let rect1_bottom_connectable = rect1.bottom() == rect2.top() && vertical_adjusted;
+        let rect1_top_connectable = rect1.top() == rect2.bottom() && vertical_adjusted;
+        let rect1_left_connectable = rect1.left() == rect2.right() && horizontal_adjustted;
+        let rect1_right_connectable = rect1.right() == rect2.left() && horizontal_adjustted;
+
+        assert!(rect1_bottom_connectable || rect1_top_connectable || rect1_left_connectable || rect1_right_connectable);
+        let dir = if rect1_bottom_connectable {
+            Direction::Down
+        } else if rect1_top_connectable {
+            Direction::Up
+        } else if rect1_left_connectable {
+            Direction::Left
+        } else {
+            Direction::Right
+        };
+
+        // FIXME: merge 後のオブジェクトには必ず色を付ける制約がある(整合性が取れていない)
+        let merged_block = Block {
+            rect: rect1.merge(&rect2, dir),
+            color: self.block_list[block_index1].color,
+            parent: None, // fixme: 整合性確認
+            id: self.next_block_id,
+            is_child: true,
+            index_of: self.block_list.len(),
+        };
+        self.next_block_id += 1;
+        self.block_list.push(merged_block);
+    }
+
+    fn swap(&mut self, block_index1: usize, block_index2: usize) {
+        assert_eq!(self.block_list[block_index1].rect.height, self.block_list[block_index2].rect.height);
+        assert_eq!(self.block_list[block_index1].rect.width, self.block_list[block_index2].rect.width);
+        macro_rules! local_swap {
+            ($x:ident) => {{
+                let tmp = self.block_list[block_index1].$x;
+                self.block_list[block_index1].$x = self.block_list[block_index2].$x;
+                self.block_list[block_index2].$x = tmp;
+            }};
+        }
+        // color, id, parent を差し替え
+        local_swap!(parent);
+        local_swap!(rect);
+        local_swap!(id);
     }
 
     pub fn save_image(&self, image_fliepath: &String) {
@@ -809,6 +888,11 @@ impl State {
                     let block_id1 = restore_id_sequence(block_index1);
                     let block_id2 = restore_id_sequence(block_index2);
                     println!("swap [{}] [{}]", block_id1, block_id2);
+                }
+                CommandWithLog::Merge(block_index1, block_index2) => {
+                    let block_id1 = restore_id_sequence(block_index1);
+                    let block_id2 = restore_id_sequence(block_index2);
+                    println!("merge [{}] [{}]", block_id1, block_id2);
                 }
             }
         }
