@@ -8,6 +8,7 @@ mod solver5;
 mod solver6;
 mod solver7;
 mod solver8;
+mod solver9;
 
 use clap::{App, Arg};
 use common::problem::{evaluate, Image, StateWithScore};
@@ -51,6 +52,8 @@ fn main() {
             solver4::solve(problem_id, &image)
         } else if solver_type == "5" {
             solver5::solve(problem_id, &image)
+        } else if solver_type == "9" {
+            solver9::solve(problem_id, &image)
         } else {
             panic!("unknown solver");
         }
