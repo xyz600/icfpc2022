@@ -167,8 +167,6 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     let mut queue = VecDeque::new();
     queue.push_back((0, 0, row_list.len() - 1, column_list.len() - 1, 0));
 
-    let mut counter = 0;
-
     while let Some((y1, x1, y2, x2, block_index)) = queue.pop_front() {
         match restore_table[y1][x1][y2][x2].unwrap() {
             SimpleCommand::VerticalSplit(xi) => {
