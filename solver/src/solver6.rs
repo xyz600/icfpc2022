@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, time::Instant};
 
 use crate::{common_solver, solver2};
 use common::{intset::IntSet, problem::*, random::CachedRandom};
@@ -42,12 +42,14 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
 
     let mut rand = CachedRandom::new(65535, 0);
 
-    {
+    loop {
         let candidate_size = row_list.len() + column_list.len() - 4;
         let mut dlb = IntSet::new(candidate_size);
         for i in 0..candidate_size {
             dlb.add(i);
         }
+
+        let mut finish = false;
 
         let mut turn = 0;
         while !dlb.is_empty() {
@@ -79,7 +81,13 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
                     row_list[index] = (row_list[index] as i64 + offset) as usize;
                 }
 
+                let start = Instant::now();
                 let state = common_solver::solve_by_divisor(image, &row_list, &column_list);
+                let elapsed = (Instant::now() - start).as_secs();
+                if elapsed > 20 {
+                    finish = true;
+                }
+
                 let eval = evaluate(image, &state);
 
                 if best_eval > eval {
@@ -116,6 +124,10 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
                     dlb.add(root_index + 1);
                 }
             }
+        }
+
+        if finish {
+            break;
         }
 
         eprintln!("add random edge...");

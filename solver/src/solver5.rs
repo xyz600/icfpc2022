@@ -1,4 +1,4 @@
-use crate::solver8;
+use crate::{solver6, solver8};
 use common::problem::*;
 use std::path::Path;
 
@@ -58,6 +58,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
         clone
     };
 
-    let pre_state = solver8::solve(problem_id, image);
+    let pre_state = solver6::solve(problem_id, image);
     apply_prestate(pre_state)
 }
