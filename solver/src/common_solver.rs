@@ -202,11 +202,6 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
                 state.apply(Command::Color(block_index, color));
             }
         }
-        if false {
-            let filepath = format!("intermediate_{:03}.png", counter);
-            state.save_image(&filepath);
-            counter += 1;
-        }
     }
     state
 }

@@ -69,8 +69,6 @@ fn main() {
             panic!("unknown solver");
         }
     };
-    final_state.save_image(&format!("solution/img/{problem_id}.png"));
-    final_state.print_output(Path::new(&format!("solution/{problem_id}.txt",)));
 
     let score = evaluate(&image, &final_state);
     StateWithScore { score, state: final_state }.save_if_global_best(problem_id);

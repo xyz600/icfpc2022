@@ -1030,12 +1030,12 @@ pub struct StateWithScore {
 }
 
 impl StateWithScore {
-    fn path_of(problem_id: usize) -> String {
+    fn path_of_json(problem_id: usize) -> String {
         format!("solution/serialized/{}.json", problem_id)
     }
 
     pub fn load(problem_id: usize) -> Option<StateWithScore> {
-        let path_str = Self::path_of(problem_id);
+        let path_str = Self::path_of_json(problem_id);
         let file = File::open(Path::new(&path_str)).unwrap();
         let mut reader = BufReader::new(file);
         serde_json::from_reader(&mut reader).unwrap()
@@ -1048,9 +1048,17 @@ impl StateWithScore {
                 return;
             }
         }
-        let path_str = Self::path_of(problem_id);
+        let path_str = Self::path_of_json(problem_id);
         let file = File::create(Path::new(&path_str)).unwrap();
         let mut writer = BufWriter::new(file);
         serde_json::to_writer_pretty(&mut writer, self).unwrap();
+
+        // 画像
+        let image_filepath = format!("solution/img/{}.png", problem_id);
+        self.state.save_image(&image_filepath);
+
+        // 解
+        let solution_filepath = format!("solution/{}.txt", problem_id);
+        self.state.print_output(Path::new(&solution_filepath));
     }
 }

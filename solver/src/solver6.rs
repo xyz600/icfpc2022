@@ -86,9 +86,11 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
                     best_eval = eval;
                     best_state = state;
 
-                    let str_filepath = format!("./solution/{problem_id}.txt");
-                    let filepath = Path::new(&str_filepath);
-                    best_state.print_output(filepath);
+                    StateWithScore {
+                        score: best_eval,
+                        state: best_state.clone(),
+                    }
+                    .save_if_global_best(problem_id);
 
                     break;
                 } else {
