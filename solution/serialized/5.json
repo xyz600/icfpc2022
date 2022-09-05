@@ -1,5 +1,5 @@
 {
-  "score": 19667.0,
+  "score": 19664.0,
   "state": {
     "block_list": [
       {
@@ -708,7 +708,7 @@
             "y": 249,
             "x": 64
           },
-          "height": 30,
+          "height": 29,
           "width": 278
         },
         "color": {
@@ -725,10 +725,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 64
           },
-          "height": 121,
+          "height": 122,
           "width": 278
         },
         "color": {
@@ -788,7 +788,7 @@
             "y": 249,
             "x": 64
           },
-          "height": 30,
+          "height": 29,
           "width": 163
         },
         "color": {
@@ -808,7 +808,7 @@
             "y": 249,
             "x": 227
           },
-          "height": 30,
+          "height": 29,
           "width": 115
         },
         "color": {
@@ -825,10 +825,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 64
           },
-          "height": 121,
+          "height": 122,
           "width": 185
         },
         "color": {
@@ -845,10 +845,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 249
           },
-          "height": 121,
+          "height": 122,
           "width": 93
         },
         "color": {
@@ -905,10 +905,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 64
           },
-          "height": 121,
+          "height": 122,
           "width": 107
         },
         "color": {
@@ -925,10 +925,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 171
           },
-          "height": 121,
+          "height": 122,
           "width": 78
         },
         "color": {
@@ -945,10 +945,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 279,
+            "y": 278,
             "x": 171
           },
-          "height": 10,
+          "height": 11,
           "width": 78
         },
         "color": {
@@ -1345,7 +1345,7 @@
       {
         "HorizontalSplit": [
           28,
-          279
+          278
         ]
       },
       {
