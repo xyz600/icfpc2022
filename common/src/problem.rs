@@ -266,6 +266,7 @@ impl Default for Color<u8> {
     }
 }
 
+#[derive(Clone)]
 pub struct Image {
     pub height: usize,
     pub width: usize,
@@ -333,6 +334,24 @@ impl Image {
             }
         }
         sum
+    }
+
+    pub fn save_image(&self, filepath: &String) {
+        let path = Path::new(filepath);
+        let file = File::create(path).unwrap();
+        let ref mut writer = BufWriter::new(file);
+        let mut encoder = png::Encoder::new(writer, self.width as u32, self.height as u32);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_trns(vec![0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8]);
+        let mut writer = encoder.write_header().unwrap();
+
+        let mut raw_data = vec![];
+        for color in self.buffer.iter() {
+            let mut color_data = vec![color.r, color.g, color.b, color.a];
+            raw_data.append(&mut color_data);
+        }
+        writer.write_image_data(&raw_data).unwrap();
     }
 }
 

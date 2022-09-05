@@ -7,7 +7,11 @@ use common::{intset::IntSet, problem::*, random::CachedRandom};
 /// 本当は敷居を増やすのも効果はかなりある（このルールだと損しないので）けど、
 /// 時間を見てかなー
 pub fn solve(problem_id: usize, image: &Image) -> State {
-    let init_state = solver2::solve(problem_id, image);
+    let init_state = if let Some(v) = StateWithScore::load(problem_id) {
+        v.state
+    } else {
+        solver2::solve(problem_id, image)
+    };
 
     let mut row_list = vec![];
     let mut column_list = vec![];

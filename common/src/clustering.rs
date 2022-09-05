@@ -4,7 +4,8 @@ use crate::{
 };
 
 /// (assign table, color)
-pub fn k_means_clustering(data: &Vec<Color8>, k: usize, random: &mut CachedRandom) -> (Vec<usize>, Vec<Color8>) {
+/// 最終的に assign_table に 0 が含まれていれば、多分色の数が多すぎるので None
+pub fn k_means_clustering(data: &Vec<Color8>, k: usize, random: &mut CachedRandom) -> Option<(Vec<usize>, Vec<Color8>)> {
     let mut assign_table = vec![0; data.len()];
     let mut center = vec![Color8::new(0, 0, 0, 0); k];
     let mut cluster_size = vec![0; k];
@@ -27,6 +28,13 @@ pub fn k_means_clustering(data: &Vec<Color8>, k: usize, random: &mut CachedRando
             temporal_center[idx] /= cluster_size[idx] as f64;
             center[idx] = temporal_center[idx].to8();
         }
+        // もし割り当てが一つもなかったら、次ターンで集まるようにランダムに1つの点を指すようにする
+        for ci in 0..k {
+            if cluster_size[ci] == 0 {
+                let random_idx = random.next_int_range(0, data.len() as u32 - 1) as usize;
+                center[ci] = data[random_idx];
+            }
+        }
 
         // 割り当ての変更
         cluster_size.fill(0);
@@ -45,7 +53,12 @@ pub fn k_means_clustering(data: &Vec<Color8>, k: usize, random: &mut CachedRando
         }
     }
 
-    (assign_table, center)
+    for ci in 0..k {
+        if cluster_size[ci] == 0 {
+            return None;
+        }
+    }
+    Some((assign_table, center))
 }
 
 #[cfg(test)]
