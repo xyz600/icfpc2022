@@ -1,5 +1,5 @@
 {
-  "score": 22604.0,
+  "score": 22592.0,
   "state": {
     "block_list": [
       {
@@ -109,7 +109,7 @@
             "x": 0
           },
           "height": 24,
-          "width": 387
+          "width": 14
         },
         "color": {
           "r": 255,
@@ -119,17 +119,17 @@
         },
         "parent": 2,
         "id": 0,
-        "is_child": false,
+        "is_child": true,
         "index_of": 5
       },
       {
         "rect": {
           "bottom_left": {
             "y": 376,
-            "x": 387
+            "x": 14
           },
           "height": 24,
-          "width": 13
+          "width": 386
         },
         "color": {
           "r": 255,
@@ -139,7 +139,7 @@
         },
         "parent": 2,
         "id": 1,
-        "is_child": true,
+        "is_child": false,
         "index_of": 6
       },
       {
@@ -226,7 +226,27 @@
         "rect": {
           "bottom_left": {
             "y": 376,
-            "x": 0
+            "x": 14
+          },
+          "height": 24,
+          "width": 372
+        },
+        "color": {
+          "r": 57,
+          "g": 73,
+          "b": 171,
+          "a": 255
+        },
+        "parent": 6,
+        "id": 0,
+        "is_child": true,
+        "index_of": 11
+      },
+      {
+        "rect": {
+          "bottom_left": {
+            "y": 376,
+            "x": 386
           },
           "height": 24,
           "width": 14
@@ -237,27 +257,7 @@
           "b": 255,
           "a": 255
         },
-        "parent": 5,
-        "id": 0,
-        "is_child": true,
-        "index_of": 11
-      },
-      {
-        "rect": {
-          "bottom_left": {
-            "y": 376,
-            "x": 14
-          },
-          "height": 24,
-          "width": 373
-        },
-        "color": {
-          "r": 57,
-          "g": 73,
-          "b": 171,
-          "a": 255
-        },
-        "parent": 5,
+        "parent": 6,
         "id": 1,
         "is_child": true,
         "index_of": 12
@@ -429,7 +429,7 @@
             "x": 59
           },
           "height": 54,
-          "width": 133
+          "width": 134
         },
         "color": {
           "r": 33,
@@ -446,10 +446,10 @@
         "rect": {
           "bottom_left": {
             "y": 33,
-            "x": 192
+            "x": 193
           },
           "height": 54,
-          "width": 208
+          "width": 207
         },
         "color": {
           "r": 26,
@@ -589,7 +589,7 @@
             "x": 0
           },
           "height": 256,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 40,
@@ -606,10 +606,10 @@
         "rect": {
           "bottom_left": {
             "y": 87,
-            "x": 72
+            "x": 71
           },
           "height": 256,
-          "width": 216
+          "width": 217
         },
         "color": {
           "r": 33,
@@ -709,7 +709,7 @@
             "x": 0
           },
           "height": 26,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 40,
@@ -729,7 +729,7 @@
             "x": 0
           },
           "height": 230,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 255,
@@ -746,10 +746,10 @@
         "rect": {
           "bottom_left": {
             "y": 87,
-            "x": 72
+            "x": 71
           },
           "height": 70,
-          "width": 216
+          "width": 217
         },
         "color": {
           "r": 33,
@@ -766,14 +766,14 @@
         "rect": {
           "bottom_left": {
             "y": 157,
-            "x": 72
+            "x": 71
           },
           "height": 186,
-          "width": 216
+          "width": 217
         },
         "color": {
-          "r": 58,
-          "g": 74,
+          "r": 68,
+          "g": 78,
           "b": 171,
           "a": 255
         },
@@ -829,7 +829,7 @@
             "x": 0
           },
           "height": 40,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 255,
@@ -849,7 +849,7 @@
             "x": 0
           },
           "height": 190,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 57,
@@ -866,10 +866,10 @@
         "rect": {
           "bottom_left": {
             "y": 87,
-            "x": 72
+            "x": 71
           },
           "height": 70,
-          "width": 87
+          "width": 88
         },
         "color": {
           "r": 33,
@@ -906,14 +906,14 @@
         "rect": {
           "bottom_left": {
             "y": 157,
-            "x": 72
+            "x": 71
           },
           "height": 186,
-          "width": 6
+          "width": 7
         },
         "color": {
-          "r": 58,
-          "g": 74,
+          "r": 68,
+          "g": 78,
           "b": 171,
           "a": 255
         },
@@ -989,7 +989,7 @@
             "x": 0
           },
           "height": 149,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 57,
@@ -1009,7 +1009,7 @@
             "x": 0
           },
           "height": 41,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 57,
@@ -1189,7 +1189,7 @@
             "x": 0
           },
           "height": 48,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 57,
@@ -1209,7 +1209,7 @@
             "x": 0
           },
           "height": 101,
-          "width": 72
+          "width": 71
         },
         "color": {
           "r": 92,
@@ -1714,7 +1714,7 @@
       {
         "VerticalSplit": [
           2,
-          387
+          14
         ]
       },
       {
@@ -1748,7 +1748,7 @@
       },
       {
         "Color": [
-          5,
+          6,
           {
             "r": 255,
             "g": 255,
@@ -1765,8 +1765,8 @@
       },
       {
         "VerticalSplit": [
-          5,
-          14
+          6,
+          386
         ]
       },
       {
@@ -1823,7 +1823,7 @@
       },
       {
         "Color": [
-          12,
+          11,
           {
             "r": 255,
             "g": 255,
@@ -1881,7 +1881,7 @@
       {
         "VerticalSplit": [
           16,
-          192
+          193
         ]
       },
       {
@@ -1973,7 +1973,7 @@
       {
         "VerticalSplit": [
           23,
-          72
+          71
         ]
       },
       {
@@ -2130,8 +2130,8 @@
             "a": 255
           },
           {
-            "r": 58,
-            "g": 74,
+            "r": 68,
+            "g": 78,
             "b": 171,
             "a": 255
           }
@@ -2216,8 +2216,8 @@
         "Color": [
           46,
           {
-            "r": 58,
-            "g": 74,
+            "r": 68,
+            "g": 78,
             "b": 171,
             "a": 255
           },
