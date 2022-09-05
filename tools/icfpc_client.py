@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     client = ICFPCClient(API_KEY)
 
-    submission_id_list = list(range(36, 41))
+    submission_id_list = list(range(1, 41))
 
     for id in submission_id_list:
         client.submit(id)
