@@ -1036,9 +1036,13 @@ impl StateWithScore {
 
     pub fn load(problem_id: usize) -> Option<StateWithScore> {
         let path_str = Self::path_of_json(problem_id);
-        let file = File::open(Path::new(&path_str)).unwrap();
-        let mut reader = BufReader::new(file);
-        serde_json::from_reader(&mut reader).unwrap()
+
+        if let Ok(file) = File::open(Path::new(&path_str)) {
+            let mut reader = BufReader::new(file);
+            serde_json::from_reader(&mut reader).unwrap()
+        } else {
+            None
+        }
     }
 
     pub fn save_if_global_best(&self, problem_id: usize) {
