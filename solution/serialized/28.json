@@ -1,5 +1,5 @@
 {
-  "score": 22788.0,
+  "score": 22765.0,
   "state": {
     "block_list": [
       {
@@ -229,7 +229,7 @@
             "x": 0
           },
           "height": 24,
-          "width": 16
+          "width": 14
         },
         "color": {
           "r": 255,
@@ -246,10 +246,10 @@
         "rect": {
           "bottom_left": {
             "y": 376,
-            "x": 16
+            "x": 14
           },
           "height": 24,
-          "width": 371
+          "width": 373
         },
         "color": {
           "r": 57,
@@ -429,7 +429,7 @@
             "x": 59
           },
           "height": 55,
-          "width": 133
+          "width": 134
         },
         "color": {
           "r": 33,
@@ -446,10 +446,10 @@
         "rect": {
           "bottom_left": {
             "y": 32,
-            "x": 192
+            "x": 193
           },
           "height": 55,
-          "width": 208
+          "width": 207
         },
         "color": {
           "r": 26,
@@ -1469,7 +1469,7 @@
             "x": 104
           },
           "height": 91,
-          "width": 17
+          "width": 18
         },
         "color": {
           "r": 33,
@@ -1486,10 +1486,10 @@
         "rect": {
           "bottom_left": {
             "y": 157,
-            "x": 121
+            "x": 122
           },
           "height": 91,
-          "width": 167
+          "width": 166
         },
         "color": {
           "r": 57,
@@ -1506,10 +1506,10 @@
         "rect": {
           "bottom_left": {
             "y": 157,
-            "x": 121
+            "x": 122
           },
           "height": 91,
-          "width": 23
+          "width": 22
         },
         "color": {
           "r": 57,
@@ -1589,7 +1589,7 @@
             "x": 144
           },
           "height": 35,
-          "width": 65
+          "width": 66
         },
         "color": {
           "r": 255,
@@ -1606,10 +1606,10 @@
         "rect": {
           "bottom_left": {
             "y": 157,
-            "x": 209
+            "x": 210
           },
           "height": 35,
-          "width": 79
+          "width": 78
         },
         "color": {
           "r": 57,
@@ -1766,7 +1766,7 @@
       {
         "VerticalSplit": [
           5,
-          16
+          14
         ]
       },
       {
@@ -1881,7 +1881,7 @@
       {
         "VerticalSplit": [
           16,
-          192
+          193
         ]
       },
       {
@@ -2513,7 +2513,7 @@
       {
         "VerticalSplit": [
           71,
-          121
+          122
         ]
       },
       {
@@ -2565,7 +2565,7 @@
       {
         "VerticalSplit": [
           77,
-          209
+          210
         ]
       },
       {
