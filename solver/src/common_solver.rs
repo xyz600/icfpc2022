@@ -47,7 +47,9 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
         height: usize,
         width: usize,
         dp: &mut Vec<Vec<Vec<Vec<f64>>>>,
-        restore_table: &mut Vec<Vec<Vec<Vec<Option<SimpleCommand>>>>>,
+        // (このタイルが行うべきコマンド, 子供の何番目の色を塗るか, 何色で塗るか)
+        // SimpleCommand::Color だった場合は意味のないデータになる
+        restore_table: &mut Vec<Vec<Vec<Vec<Option<(SimpleCommand, usize, Color8)>>>>>,
         row_list: &Vec<usize>,
         column_list: &Vec<usize>,
         y1: usize,
@@ -57,6 +59,8 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     ) {
         assert!(y1 <= y2);
         assert!(x1 <= x2);
+
+        let canvas_size = height * width;
 
         let calculate_block_size = |y1: usize, x1: usize, y2: usize, x2: usize| -> usize { (row_list[y2] - row_list[y1]) * (column_list[x2] - column_list[x1]) };
 
@@ -76,7 +80,6 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
                 }
             }
 
-            let canvas_size = height * width;
             let block_size = calculate_block_size(y1, x1, y2, x2);
             let command_cost = COLOR_COST * canvas_size as f64 / block_size as f64;
 
@@ -105,17 +108,32 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
         let (color_cost, color) = calculate_color_cost(y1, x1, y2, x2);
         if dp[y1][x1][y2][x2] > color_cost {
             dp[y1][x1][y2][x2] = color_cost;
-            restore_table[y1][x1][y2][x2] = Some(SimpleCommand::Color(color));
+            // 後ろ2つは意味ない
+            restore_table[y1][x1][y2][x2] = Some((SimpleCommand::Color(color), 0, color));
         }
+        let self_block_size = calculate_block_size(y1, x1, y2, x2);
 
         // 横分割して再帰
         for yi in y1 + 1..y2 {
             inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, x2);
             inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, x2);
-            let vert_cost = dp[y1][x1][yi][x2] + dp[yi][x1][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2);
+
+            // 色の塗り方を工夫することで、自分の色を塗ってから最大コストの色塗りを1つ回避できる
+            let block_size1 = calculate_block_size(y1, x1, yi, x2);
+            let block_size2 = calculate_block_size(yi, x1, y2, x2);
+            let max_color_cost = COLOR_COST * canvas_size as f64 / block_size1.min(block_size2) as f64;
+            let self_color_cost = COLOR_COST * canvas_size as f64 / self_block_size as f64;
+
+            let vert_cost = dp[y1][x1][yi][x2] + dp[yi][x1][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2) + self_color_cost - max_color_cost;
             if dp[y1][x1][y2][x2] > vert_cost {
                 dp[y1][x1][y2][x2] = vert_cost;
-                restore_table[y1][x1][y2][x2] = Some(SimpleCommand::HorizontalSplit(yi));
+
+                let (child_index, child_color) = if block_size1 < block_size2 {
+                    (0, restore_table[y1][x1][yi][x2].unwrap().2)
+                } else {
+                    (1, restore_table[yi][x1][y2][x2].unwrap().2)
+                };
+                restore_table[y1][x1][y2][x2] = Some((SimpleCommand::HorizontalSplit(yi), child_index, child_color));
             }
         }
 
@@ -123,10 +141,23 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
         for xi in x1 + 1..x2 {
             inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, y2, xi);
             inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, y2, x2);
-            let hor_cost = dp[y1][x1][y2][xi] + dp[y1][xi][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2);
+
+            // 色の塗り方を工夫することで、自分の色を塗ってから最大コストの色塗りを1つ回避できる
+            let block_size1 = calculate_block_size(y1, x1, y2, xi);
+            let block_size2 = calculate_block_size(y1, xi, y2, x2);
+            let max_color_cost = COLOR_COST * canvas_size as f64 / block_size1.min(block_size2) as f64;
+            let self_color_cost = COLOR_COST * canvas_size as f64 / self_block_size as f64;
+
+            let hor_cost = dp[y1][x1][y2][xi] + dp[y1][xi][y2][x2] + calculate_line_cut_cost(y1, x1, y2, x2) + self_color_cost - max_color_cost;
             if dp[y1][x1][y2][x2] > hor_cost {
                 dp[y1][x1][y2][x2] = hor_cost;
-                restore_table[y1][x1][y2][x2] = Some(SimpleCommand::VerticalSplit(xi));
+
+                let (child_index, child_color) = if block_size1 < block_size2 {
+                    (0, restore_table[y1][x1][y2][xi].unwrap().2)
+                } else {
+                    (1, restore_table[y1][xi][y2][x2].unwrap().2)
+                };
+                restore_table[y1][x1][y2][x2] = Some((SimpleCommand::VerticalSplit(xi), child_index, child_color));
             }
         }
 
@@ -135,13 +166,41 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
             for xi in x1 + 1..x2 {
                 inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, x1, yi, xi);
                 inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, y1, xi, yi, x2);
-                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, xi);
                 inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, xi, y2, x2);
+                inner(image, median_calculator, height, width, dp, restore_table, row_list, column_list, yi, x1, y2, xi);
 
-                let point_cost = dp[y1][x1][yi][xi] + dp[y1][xi][yi][x2] + dp[yi][x1][y2][xi] + dp[yi][xi][y2][x2] + calculate_point_cut_cost(y1, x1, y2, x2);
+                // 色の塗り方を工夫することで、自分の色を塗ってから最大コストの色塗りを1つ回避できる
+                let block_size_list = vec![
+                    calculate_block_size(y1, x1, yi, xi),
+                    calculate_block_size(y1, xi, yi, x2),
+                    calculate_block_size(yi, xi, y2, x2),
+                    calculate_block_size(yi, x1, y2, xi),
+                ];
+                let min_block_size = *block_size_list.iter().min().unwrap();
+                let max_color_cost = COLOR_COST * canvas_size as f64 / min_block_size as f64;
+                let self_color_cost = COLOR_COST * canvas_size as f64 / self_block_size as f64;
+
+                let point_cost = dp[y1][x1][yi][xi] + dp[y1][xi][yi][x2] + dp[yi][xi][y2][x2] + dp[yi][x1][y2][xi] + calculate_point_cut_cost(y1, x1, y2, x2) + self_color_cost - max_color_cost;
+
                 if dp[y1][x1][y2][x2] > point_cost {
                     dp[y1][x1][y2][x2] = point_cost;
-                    restore_table[y1][x1][y2][x2] = Some(SimpleCommand::PointSplit(yi, xi));
+
+                    let mut child_index = 0;
+                    let mut child_color = Color8::new(0, 0, 0, 0);
+                    let color_list = vec![
+                        restore_table[y1][x1][yi][xi].unwrap().2,
+                        restore_table[y1][xi][yi][x2].unwrap().2,
+                        restore_table[yi][xi][y2][x2].unwrap().2,
+                        restore_table[yi][x1][y2][xi].unwrap().2,
+                    ];
+                    for i in 0..4 {
+                        if block_size_list[0] == min_block_size {
+                            child_index = i;
+                            child_color = color_list[i];
+                            break;
+                        }
+                    }
+                    restore_table[y1][x1][y2][x2] = Some((SimpleCommand::PointSplit(yi, xi), child_index, child_color));
                 }
             }
         }
@@ -165,39 +224,51 @@ pub fn solve_by_divisor(image: &Image, row_list: &Vec<usize>, column_list: &Vec<
     // コマンドを復元
     let mut state = State::new(image.height, image.width);
     let mut queue = VecDeque::new();
-    queue.push_back((0, 0, row_list.len() - 1, column_list.len() - 1, 0));
+    queue.push_back((0, 0, row_list.len() - 1, column_list.len() - 1, 0, true));
 
-    while let Some((y1, x1, y2, x2, block_index)) = queue.pop_front() {
-        match restore_table[y1][x1][y2][x2].unwrap() {
+    while let Some((y1, x1, y2, x2, block_index, color_self)) = queue.pop_front() {
+        let (cmd, child_index, child_color) = restore_table[y1][x1][y2][x2].unwrap();
+        match cmd {
             SimpleCommand::VerticalSplit(xi) => {
                 let x = column_list[xi];
                 let child_block_index = state.block_list.len();
                 let cmd = Command::VerticalSplit(block_index, x);
+                if color_self {
+                    state.apply(Command::Color(block_index, child_color));
+                }
                 state.apply(cmd);
-                queue.push_back((y1, x1, y2, xi, child_block_index));
-                queue.push_back((y1, xi, y2, x2, child_block_index + 1));
+                queue.push_back((y1, x1, y2, xi, child_block_index, child_index != 0));
+                queue.push_back((y1, xi, y2, x2, child_block_index + 1, child_index != 1));
             }
             SimpleCommand::HorizontalSplit(yi) => {
                 let y = row_list[yi];
                 let child_block_index = state.block_list.len();
                 let cmd = Command::HorizontalSplit(block_index, y);
+                if color_self {
+                    state.apply(Command::Color(block_index, child_color));
+                }
                 state.apply(cmd);
-                queue.push_back((y1, x1, yi, x2, child_block_index));
-                queue.push_back((yi, x1, y2, x2, child_block_index + 1));
+                queue.push_back((y1, x1, yi, x2, child_block_index, child_index != 0));
+                queue.push_back((yi, x1, y2, x2, child_block_index + 1, child_index != 1));
             }
             SimpleCommand::PointSplit(yi, xi) => {
                 let y = row_list[yi];
                 let x = column_list[xi];
                 let cmd = Command::PointSplit(block_index, Pos::new(y, x));
                 let child_block_index = state.block_list.len();
+                if color_self {
+                    state.apply(Command::Color(block_index, child_color));
+                }
                 state.apply(cmd);
-                queue.push_back((y1, x1, yi, xi, child_block_index));
-                queue.push_back((y1, xi, yi, x2, child_block_index + 1));
-                queue.push_back((yi, xi, y2, x2, child_block_index + 2));
-                queue.push_back((yi, x1, y2, xi, child_block_index + 3));
+                queue.push_back((y1, x1, yi, xi, child_block_index, child_index != 0));
+                queue.push_back((y1, xi, yi, x2, child_block_index + 1, child_index != 1));
+                queue.push_back((yi, xi, y2, x2, child_block_index + 2, child_index != 2));
+                queue.push_back((yi, x1, y2, xi, child_block_index + 3, child_index != 3));
             }
             SimpleCommand::Color(color) => {
-                state.apply(Command::Color(block_index, color));
+                if color_self {
+                    state.apply(Command::Color(block_index, color));
+                }
             }
         }
     }
