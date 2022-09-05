@@ -1,5 +1,5 @@
 {
-  "score": 23938.0,
+  "score": 23937.0,
   "state": {
     "block_list": [
       {
@@ -228,7 +228,7 @@
             "y": 0,
             "x": 318
           },
-          "height": 99,
+          "height": 100,
           "width": 45
         },
         "color": {
@@ -245,10 +245,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 99,
+            "y": 100,
             "x": 318
           },
-          "height": 301,
+          "height": 300,
           "width": 45
         },
         "color": {
@@ -1263,7 +1263,7 @@
       {
         "HorizontalSplit": [
           8,
-          99
+          100
         ]
       },
       {
