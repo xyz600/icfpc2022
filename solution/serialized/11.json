@@ -1,5 +1,5 @@
 {
-  "score": 30639.0,
+  "score": 30635.0,
   "state": {
     "block_list": [
       {
@@ -869,7 +869,7 @@
             "x": 129
           },
           "height": 57,
-          "width": 27
+          "width": 28
         },
         "color": {
           "r": 78,
@@ -886,10 +886,10 @@
         "rect": {
           "bottom_left": {
             "y": 29,
-            "x": 156
+            "x": 157
           },
           "height": 57,
-          "width": 190
+          "width": 189
         },
         "color": {
           "r": 244,
@@ -1066,10 +1066,10 @@
         "rect": {
           "bottom_left": {
             "y": 29,
-            "x": 156
+            "x": 157
           },
           "height": 57,
-          "width": 37
+          "width": 36
         },
         "color": {
           "r": 244,
@@ -1429,7 +1429,7 @@
             "x": 38
           },
           "height": 54,
-          "width": 118
+          "width": 119
         },
         "color": {
           "r": 230,
@@ -1446,10 +1446,10 @@
         "rect": {
           "bottom_left": {
             "y": 346,
-            "x": 156
+            "x": 157
           },
           "height": 54,
-          "width": 80
+          "width": 79
         },
         "color": {
           "r": 241,
@@ -2300,7 +2300,7 @@
       {
         "VerticalSplit": [
           34,
-          156
+          157
         ]
       },
       {
@@ -2622,7 +2622,7 @@
       {
         "VerticalSplit": [
           62,
-          156
+          157
         ]
       },
       {
