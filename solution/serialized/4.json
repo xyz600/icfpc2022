@@ -1,5 +1,5 @@
 {
-  "score": 22628.0,
+  "score": 22484.0,
   "state": {
     "block_list": [
       {
@@ -229,7 +229,7 @@
             "x": 70
           },
           "height": 239,
-          "width": 92
+          "width": 88
         },
         "color": {
           "r": 255,
@@ -246,10 +246,10 @@
         "rect": {
           "bottom_left": {
             "y": 161,
-            "x": 162
+            "x": 158
           },
           "height": 239,
-          "width": 238
+          "width": 242
         },
         "color": {
           "r": 255,
@@ -266,10 +266,10 @@
         "rect": {
           "bottom_left": {
             "y": 161,
-            "x": 162
+            "x": 158
           },
-          "height": 57,
-          "width": 24
+          "height": 50,
+          "width": 28
         },
         "color": {
           "r": 0,
@@ -288,7 +288,7 @@
             "y": 161,
             "x": 186
           },
-          "height": 57,
+          "height": 50,
           "width": 214
         },
         "color": {
@@ -305,10 +305,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 218,
+            "y": 211,
             "x": 186
           },
-          "height": 182,
+          "height": 189,
           "width": 214
         },
         "color": {
@@ -325,11 +325,11 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 218,
-            "x": 162
+            "y": 211,
+            "x": 158
           },
-          "height": 182,
-          "width": 24
+          "height": 189,
+          "width": 28
         },
         "color": {
           "r": 255,
@@ -345,10 +345,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 218,
+            "y": 211,
             "x": 186
           },
-          "height": 41,
+          "height": 48,
           "width": 214
         },
         "color": {
@@ -385,10 +385,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 218,
+            "y": 211,
             "x": 186
           },
-          "height": 41,
+          "height": 48,
           "width": 36
         },
         "color": {
@@ -405,10 +405,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 218,
+            "y": 211,
             "x": 222
           },
-          "height": 41,
+          "height": 48,
           "width": 178
         },
         "color": {
@@ -509,7 +509,7 @@
       {
         "VerticalSplit": [
           8,
-          162
+          158
         ]
       },
       {
@@ -567,7 +567,7 @@
         "PointSplit": [
           12,
           {
-            "y": 218,
+            "y": 211,
             "x": 186
           }
         ]
