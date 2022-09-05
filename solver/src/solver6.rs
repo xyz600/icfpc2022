@@ -38,7 +38,7 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
 
     let mut rand = CachedRandom::new(65535, 0);
 
-    loop {
+    {
         let candidate_size = row_list.len() + column_list.len() - 4;
         let mut dlb = IntSet::new(candidate_size);
         for i in 0..candidate_size {

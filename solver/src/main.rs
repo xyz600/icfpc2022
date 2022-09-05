@@ -11,7 +11,7 @@ mod solver7;
 use std::path::Path;
 
 use clap::{App, Arg};
-use common::problem::Image;
+use common::problem::{evaluate, Image, StateWithScore};
 
 fn main() {
     let app = App::new("xyzsolver")
@@ -71,4 +71,7 @@ fn main() {
     };
     final_state.save_image(&format!("solution/img/{problem_id}.png"));
     final_state.print_output(Path::new(&format!("solution/{problem_id}.txt",)));
+
+    let score = evaluate(&image, &final_state);
+    StateWithScore { score, state: final_state }.save_if_global_best(problem_id);
 }

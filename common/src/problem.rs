@@ -8,14 +8,14 @@ pub const ALPHA: f64 = 0.005;
 use png::ColorType;
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::{BufReader, BufWriter, Write},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
     path::Path,
 };
 
 use crate::config_loader;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Color<T> {
     pub r: T,
     pub g: T,
@@ -336,7 +336,7 @@ impl Image {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Pos {
     pub y: usize,
     pub x: usize,
@@ -348,7 +348,7 @@ impl Pos {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Rectangle {
     pub bottom_left: Pos,
     pub height: usize,
@@ -435,7 +435,7 @@ impl Rectangle {
 }
 
 /// FIXME: merge 操作を特別視する. enum 用意する？
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub rect: Rectangle,
     pub color: Color8,
@@ -572,7 +572,7 @@ impl Command {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 enum CommandWithLog {
     // block_idx, y
     HorizontalSplit(usize, usize),
@@ -623,7 +623,7 @@ impl CommandWithLog {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct State {
     pub block_list: Vec<Block>,
     next_block_id: usize,
@@ -1021,4 +1021,36 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
     eprintln!("cost: (pixel, command) = ({}, {})", pixel_cost, command_cost);
 
     pixel_cost + command_cost as f64
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct StateWithScore {
+    pub score: f64,
+    pub state: State,
+}
+
+impl StateWithScore {
+    fn path_of(problem_id: usize) -> String {
+        format!("solution/serialized/{}.json", problem_id)
+    }
+
+    pub fn load(problem_id: usize) -> Option<StateWithScore> {
+        let path_str = Self::path_of(problem_id);
+        let file = File::open(Path::new(&path_str)).unwrap();
+        let mut reader = BufReader::new(file);
+        serde_json::from_reader(&mut reader).unwrap()
+    }
+
+    pub fn save_if_global_best(&self, problem_id: usize) {
+        if let Some(existing_result) = Self::load(problem_id) {
+            // あったら、既存ファイルをデシリアライズして、スコアがよかったら上書き保存
+            if existing_result.score < self.score {
+                return;
+            }
+        }
+        let path_str = Self::path_of(problem_id);
+        let file = File::create(Path::new(&path_str)).unwrap();
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, self).unwrap();
+    }
 }
