@@ -7,7 +7,11 @@ use common::{intset::IntSet, problem::*, random::CachedRandom};
 /// 本当は敷居を増やすのも効果はかなりある（このルールだと損しないので）けど、
 /// 時間を見てかなー
 pub fn solve(problem_id: usize, image: &Image) -> State {
-    let init_state = solver2::solve(problem_id, image);
+    let init_state = if let Some(v) = StateWithScore::load(problem_id) {
+        v.state
+    } else {
+        solver2::solve(problem_id, image)
+    };
 
     let mut row_list = vec![];
     let mut column_list = vec![];
@@ -38,7 +42,7 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
 
     let mut rand = CachedRandom::new(65535, 0);
 
-    loop {
+    {
         let candidate_size = row_list.len() + column_list.len() - 4;
         let mut dlb = IntSet::new(candidate_size);
         for i in 0..candidate_size {
@@ -86,9 +90,11 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
                     best_eval = eval;
                     best_state = state;
 
-                    let str_filepath = format!("./solution/{problem_id}.txt");
-                    let filepath = Path::new(&str_filepath);
-                    best_state.print_output(filepath);
+                    StateWithScore {
+                        score: best_eval,
+                        state: best_state.clone(),
+                    }
+                    .save_if_global_best(problem_id);
 
                     break;
                 } else {

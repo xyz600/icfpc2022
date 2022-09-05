@@ -7,11 +7,10 @@ mod solver4;
 mod solver5;
 mod solver6;
 mod solver7;
-
-use std::path::Path;
+mod solver8;
 
 use clap::{App, Arg};
-use common::problem::Image;
+use common::problem::{evaluate, Image, StateWithScore};
 
 fn main() {
     let app = App::new("xyzsolver")
@@ -21,7 +20,7 @@ fn main() {
         .arg(Arg::with_name("problem-id").help("input problem id").short('i').long("problem-id").required(true).takes_value(true))
         .arg(
             Arg::with_name("solver-type")
-                .help("select solver type to use. set 1 | 2 | 3 | 4 | 5 | 6 | 7 (solver 3 | 4 | 5 is only available when use-twin-image is on.)")
+                .help("select solver type to use. set 1 ~ 8 \n  (solver 3 | 4 | 5 is only available when use-twin-image is on.)\n  solver 7 is for only problem 1")
                 .short('s')
                 .long("solver-type")
                 .required(true)
@@ -65,10 +64,13 @@ fn main() {
         } else if solver_type == "7" {
             assert_eq!(problem_id, 1);
             solver7::solve(problem_id, &image)
+        } else if solver_type == "8" {
+            solver8::solve(problem_id, &image)
         } else {
             panic!("unknown solver");
         }
     };
-    final_state.save_image(&format!("solution/img/{problem_id}.png"));
-    final_state.print_output(Path::new(&format!("solution/{problem_id}.txt",)));
+
+    let score = evaluate(&image, &final_state);
+    StateWithScore { score, state: final_state }.save_if_global_best(problem_id);
 }

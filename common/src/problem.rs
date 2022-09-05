@@ -8,14 +8,14 @@ pub const ALPHA: f64 = 0.005;
 use png::ColorType;
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::{BufReader, BufWriter, Write},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
     path::Path,
 };
 
 use crate::config_loader;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Color<T> {
     pub r: T,
     pub g: T,
@@ -266,6 +266,7 @@ impl Default for Color<u8> {
     }
 }
 
+#[derive(Clone)]
 pub struct Image {
     pub height: usize,
     pub width: usize,
@@ -334,9 +335,27 @@ impl Image {
         }
         sum
     }
+
+    pub fn save_image(&self, filepath: &String) {
+        let path = Path::new(filepath);
+        let file = File::create(path).unwrap();
+        let ref mut writer = BufWriter::new(file);
+        let mut encoder = png::Encoder::new(writer, self.width as u32, self.height as u32);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_trns(vec![0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8]);
+        let mut writer = encoder.write_header().unwrap();
+
+        let mut raw_data = vec![];
+        for color in self.buffer.iter() {
+            let mut color_data = vec![color.r, color.g, color.b, color.a];
+            raw_data.append(&mut color_data);
+        }
+        writer.write_image_data(&raw_data).unwrap();
+    }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Pos {
     pub y: usize,
     pub x: usize,
@@ -348,7 +367,7 @@ impl Pos {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Rectangle {
     pub bottom_left: Pos,
     pub height: usize,
@@ -435,7 +454,7 @@ impl Rectangle {
 }
 
 /// FIXME: merge 操作を特別視する. enum 用意する？
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Block {
     pub rect: Rectangle,
     pub color: Color8,
@@ -572,7 +591,7 @@ impl Command {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 enum CommandWithLog {
     // block_idx, y
     HorizontalSplit(usize, usize),
@@ -623,7 +642,7 @@ impl CommandWithLog {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct State {
     pub block_list: Vec<Block>,
     next_block_id: usize,
@@ -1021,4 +1040,48 @@ pub fn evaluate(image: &Image, state: &State) -> f64 {
     eprintln!("cost: (pixel, command) = ({}, {})", pixel_cost, command_cost);
 
     pixel_cost + command_cost as f64
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct StateWithScore {
+    pub score: f64,
+    pub state: State,
+}
+
+impl StateWithScore {
+    fn path_of_json(problem_id: usize) -> String {
+        format!("solution/serialized/{}.json", problem_id)
+    }
+
+    pub fn load(problem_id: usize) -> Option<StateWithScore> {
+        let path_str = Self::path_of_json(problem_id);
+
+        if let Ok(file) = File::open(Path::new(&path_str)) {
+            let mut reader = BufReader::new(file);
+            serde_json::from_reader(&mut reader).unwrap()
+        } else {
+            None
+        }
+    }
+
+    pub fn save_if_global_best(&self, problem_id: usize) {
+        if let Some(existing_result) = Self::load(problem_id) {
+            // あったら、既存ファイルをデシリアライズして、スコアがよかったら上書き保存
+            if existing_result.score < self.score {
+                return;
+            }
+        }
+        let path_str = Self::path_of_json(problem_id);
+        let file = File::create(Path::new(&path_str)).unwrap();
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, self).unwrap();
+
+        // 画像
+        let image_filepath = format!("solution/img/{}.png", problem_id);
+        self.state.save_image(&image_filepath);
+
+        // 解
+        let solution_filepath = format!("solution/{}.txt", problem_id);
+        self.state.print_output(Path::new(&solution_filepath));
+    }
 }
