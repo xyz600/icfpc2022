@@ -8,7 +8,7 @@ cp target/release/solver ./solver_bin
 # single experiment
 dataset="`seq 1 25` `seq 36 40`"
 echo $dataset
-parallel --progress --result result ./solver_bin -i {} -s 2 ::: $dataset &
+parallel --progress --result result ./solver_bin -i {} -s 8 ::: $dataset &
 
 # twin experiment
 dataset_twin=`seq 26 35`
