@@ -15,7 +15,7 @@ parallel --progress --result result ./solver_bin -i {} -s 6 ::: $dataset &
 
 # twin experiment
 dataset_twin=`seq 26 35`
-parallel --progress --result result ./solver_bin -i {} -s 5 -t ::: $dataset_twin &
+parallel --progress --result result ./solver_bin -i {} -s 8 -t ::: $dataset_twin &
 
 wait
 
