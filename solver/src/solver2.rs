@@ -21,12 +21,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             if best_score > exact_score {
                 best_score = exact_score;
                 best_state = state;
-
-                StateWithScore {
-                    score: best_score,
-                    state: best_state.clone(),
-                }
-                .save_if_global_best(problem_id);
             }
         } else {
             eprintln!("cannot solve with edge: row = {}, column = {}", row_list.len(), column_list.len());
@@ -59,11 +53,6 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
             if best_score > exact_score {
                 best_score = exact_score;
                 best_state = state;
-                StateWithScore {
-                    score: best_score,
-                    state: best_state.clone(),
-                }
-                .save_if_global_best(problem_id);
             }
         }
     }
