@@ -1,5 +1,5 @@
 {
-  "score": 18863.0,
+  "score": 18861.0,
   "state": {
     "block_list": [
       {
@@ -1148,7 +1148,7 @@
             "y": 182,
             "x": 289
           },
-          "height": 24,
+          "height": 25,
           "width": 26
         },
         "color": {
@@ -1165,10 +1165,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 206,
+            "y": 207,
             "x": 289
           },
-          "height": 194,
+          "height": 193,
           "width": 26
         },
         "color": {
@@ -1425,10 +1425,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 206,
+            "y": 207,
             "x": 289
           },
-          "height": 79,
+          "height": 78,
           "width": 26
         },
         "color": {
@@ -1508,7 +1508,7 @@
             "y": 77,
             "x": 0
           },
-          "height": 129,
+          "height": 130,
           "width": 144
         },
         "color": {
@@ -1525,10 +1525,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 206,
+            "y": 207,
             "x": 0
           },
-          "height": 194,
+          "height": 193,
           "width": 144
         },
         "color": {
@@ -1708,7 +1708,7 @@
             "y": 77,
             "x": 0
           },
-          "height": 129,
+          "height": 130,
           "width": 15
         },
         "color": {
@@ -1728,7 +1728,7 @@
             "y": 77,
             "x": 15
           },
-          "height": 129,
+          "height": 130,
           "width": 129
         },
         "color": {
@@ -1745,10 +1745,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 206,
+            "y": 207,
             "x": 0
           },
-          "height": 20,
+          "height": 19,
           "width": 144
         },
         "color": {
@@ -1888,7 +1888,7 @@
             "y": 102,
             "x": 15
           },
-          "height": 104,
+          "height": 105,
           "width": 129
         },
         "color": {
@@ -1988,7 +1988,7 @@
             "y": 102,
             "x": 15
           },
-          "height": 104,
+          "height": 105,
           "width": 103
         },
         "color": {
@@ -2008,7 +2008,7 @@
             "y": 102,
             "x": 118
           },
-          "height": 104,
+          "height": 105,
           "width": 26
         },
         "color": {
@@ -2770,7 +2770,7 @@
       {
         "HorizontalSplit": [
           42,
-          206
+          207
         ]
       },
       {
@@ -2994,7 +2994,7 @@
       {
         "HorizontalSplit": [
           62,
-          206
+          207
         ]
       },
       {
