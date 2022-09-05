@@ -1,6 +1,6 @@
-use std::{arch::x86_64::_mm_hadd_epi16, time::Instant};
+use std::time::Instant;
 
-use crate::common_solver::{detect_edge, solve_by_divisor};
+use crate::common_solver::solve_by_divisor;
 use common::{clustering::k_means_clustering, problem::*, random::CachedRandom};
 
 // row_list, column_list
@@ -160,7 +160,7 @@ pub fn solve(problem_id: usize, image: &Image) -> State {
                     .save_if_global_best(problem_id);
                 }
 
-                if elapsed > 480 {
+                if elapsed > 20 {
                     break;
                 }
             }
