@@ -1,5 +1,5 @@
 {
-  "score": 16390.0,
+  "score": 16385.0,
   "state": {
     "block_list": [
       {
@@ -508,7 +508,7 @@
             "y": 103,
             "x": 254
           },
-          "height": 284,
+          "height": 285,
           "width": 129
         },
         "color": {
@@ -525,10 +525,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 387,
+            "y": 388,
             "x": 254
           },
-          "height": 13,
+          "height": 12,
           "width": 129
         },
         "color": {
@@ -668,7 +668,7 @@
             "y": 103,
             "x": 254
           },
-          "height": 284,
+          "height": 285,
           "width": 121
         },
         "color": {
@@ -688,7 +688,7 @@
             "y": 103,
             "x": 375
           },
-          "height": 284,
+          "height": 285,
           "width": 8
         },
         "color": {
@@ -808,7 +808,7 @@
             "y": 358,
             "x": 254
           },
-          "height": 29,
+          "height": 30,
           "width": 121
         },
         "color": {
@@ -1847,7 +1847,7 @@
       {
         "HorizontalSplit": [
           20,
-          387
+          388
         ]
       },
       {
