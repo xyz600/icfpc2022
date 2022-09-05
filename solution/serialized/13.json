@@ -1,5 +1,5 @@
 {
-  "score": 18806.0,
+  "score": 18799.0,
   "state": {
     "block_list": [
       {
@@ -268,7 +268,7 @@
             "y": 0,
             "x": 0
           },
-          "height": 286,
+          "height": 284,
           "width": 104
         },
         "color": {
@@ -285,10 +285,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 286,
+            "y": 284,
             "x": 0
           },
-          "height": 35,
+          "height": 37,
           "width": 104
         },
         "color": {
@@ -388,7 +388,7 @@
             "y": 0,
             "x": 0
           },
-          "height": 286,
+          "height": 284,
           "width": 83
         },
         "color": {
@@ -408,7 +408,7 @@
             "y": 0,
             "x": 83
           },
-          "height": 286,
+          "height": 284,
           "width": 21
         },
         "color": {
@@ -528,7 +528,7 @@
             "y": 225,
             "x": 0
           },
-          "height": 61,
+          "height": 59,
           "width": 83
         },
         "color": {
@@ -708,7 +708,7 @@
             "y": 52,
             "x": 323
           },
-          "height": 208,
+          "height": 209,
           "width": 77
         },
         "color": {
@@ -725,10 +725,10 @@
       {
         "rect": {
           "bottom_left": {
-            "y": 260,
+            "y": 261,
             "x": 323
           },
-          "height": 61,
+          "height": 60,
           "width": 77
         },
         "color": {
@@ -768,7 +768,7 @@
             "y": 156,
             "x": 323
           },
-          "height": 104,
+          "height": 105,
           "width": 77
         },
         "color": {
@@ -855,7 +855,7 @@
       {
         "HorizontalSplit": [
           7,
-          286
+          284
         ]
       },
       {
@@ -1125,7 +1125,7 @@
       {
         "HorizontalSplit": [
           30,
-          260
+          261
         ]
       },
       {
